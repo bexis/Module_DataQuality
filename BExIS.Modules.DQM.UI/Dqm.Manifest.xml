@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Manifest moduleId="Dov" displayName="" version="1.0.0" builtin="false">
+  <Description>
+    <!--add proper description-->
+  </Description>
+  <Assemblies>
+    <Assembly fullName="" role=""/>
+  </Assemblies>
+  <Dependencies>
+    <!--<Dependency moduleId="dcm" version="*.*.*" />-->
+  </Dependencies>
+  <Exports>
+    <!--add proper menu items-->
+	
+   
+    
+  </Exports>
+
+	<Hooks>
+		<!-- VIEW-->
+		<Hook
+			  name="quality"
+			  displayName ="Quality"
+			  mode="view"
+			  entity="dataset"
+			  place="details"
+			  module="dcm"
+			  type="BExIS.Modules.Dqm.UI.Hooks.DataQualityHook, BExIS.Modules.Dqm.UI, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
+	</Hooks>
+</Manifest>
