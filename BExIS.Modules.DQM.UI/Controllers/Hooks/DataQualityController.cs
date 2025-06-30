@@ -10,20 +10,26 @@ using System.Web;
 using System.Web.Mvc;
 using Vaiona.Web.Mvc.Models;
 
-namespace BExIS.Modules.Dov.UI.Controllers.Legacy
+namespace BExIS.Modules.Dqm.UI.Controllers.Legacy
 {
     public class DataQualityController : Controller
     {
         // GET: DataQuality
         public ActionResult Index()
         {
-            //ViewBag.Title = PresentationModel.GetViewTitleForTenant("Dataset Overview", this.Session.GetTenant());
-            string module = "DQM";
+            ////ViewBag.Title = PresentationModel.GetViewTitleForTenant("Dataset Overview", this.Session.GetTenant());
+            //string module = "DQM";
 
-            ViewData["app"] = SvelteHelper.GetApp(module);
-            ViewData["start"] = SvelteHelper.GetStart(module);
+            //ViewData["app"] = SvelteHelper.GetApp(module);
+            //ViewData["start"] = SvelteHelper.GetStart(module);
 
-            return View();
+            return PartialView("Index");
+        }
+
+        public ActionResult Test()
+        {
+            return View("Index");
+
         }
 
         /// <summary>
@@ -34,8 +40,9 @@ namespace BExIS.Modules.Dov.UI.Controllers.Legacy
         /// <returns></returns>
         [BExISEntityAuthorize(typeof(Dataset), "id", RightType.Read)]
         public ActionResult Start(long id, int version = 0)
-        {
-            return RedirectToAction("index", new { id, version });
+       {
+            //return RedirectToAction("index", new { id, version });
+            return RedirectToAction("Index");
         }
     }
 

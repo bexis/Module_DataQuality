@@ -17,8 +17,8 @@ namespace BExIS.Modules.Dov.UI.Helper
 
             try
             {
-                Feature rootDataToolsFeature = featureManager.FeatureRepository.Get().FirstOrDefault(f => f.Name.Equals("Data Tools"));
-                if (rootDataToolsFeature == null) rootDataToolsFeature = featureManager.Create("Data Tools", "Data Tools");
+                Feature rootDataToolsFeature = featureManager.FeatureRepository.Get().FirstOrDefault(f => f.Name.Equals("Data Quality Hook"));
+                if (rootDataToolsFeature == null) rootDataToolsFeature = featureManager.Create("Data Quality Hook", "Data Quality Hook");
 
                 Feature GalleryFeature = featureManager.FeatureRepository.Get().FirstOrDefault(f => f.Name.Equals("Datasets Overview"));
                 if (GalleryFeature == null) GalleryFeature = featureManager.Create("Datasets Overview", "Datasets Overview", rootDataToolsFeature);

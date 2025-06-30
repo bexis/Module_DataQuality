@@ -11,8 +11,8 @@
     <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>BExIS.Modules.Dov.UI</RootNamespace>
-    <AssemblyName>BExIS.Modules.Dov.UI</AssemblyName>
+    <RootNamespace>BExIS.Modules.Dqm.UI</RootNamespace>
+    <AssemblyName>BExIS.Modules.Dqm.UI</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <MvcBuildViews>false</MvcBuildViews>
     <UseIISExpress>true</UseIISExpress>
@@ -265,8 +265,8 @@
     </PropertyGroup>
   </Target>
   <PropertyGroup>
-    <PostBuildEvent>mkdir "$(SolutionDir)Console\Workspace\Modules\DOV"
-C:\Windows\System32\xcopy "$(ProjectDir)Dov.Settings.json" "$(SolutionDir)Console\Workspace\Modules\DOV" /C /Y /I</PostBuildEvent>
+    <PostBuildEvent>mkdir "$(SolutionDir)Console\Workspace\Modules\DQM"
+C:\Windows\System32\xcopy "$(ProjectDir)Dqm.Settings.json" "$(SolutionDir)Console\Workspace\Modules\DQM" /C /Y /I</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.

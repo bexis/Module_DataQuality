@@ -3,25 +3,25 @@ using System;
 using Vaiona.Logging;
 using Vaiona.Web.Mvc.Modularity;
 
-namespace BExIS.Modules.Dov.UI
+namespace BExIS.Modules.Dqm.UI
 {
-    public class DOVModule : ModuleBase
+    public class DQMModule : ModuleBase
     {
-        public DOVModule(): base("DOV")
+        public DQMModule(): base("DQM")
         {
         }
 
        
         public override void Install()
         {
-            LoggerFactory.GetFileLogger().LogCustom("... start install of DOV ...");
+            LoggerFactory.GetFileLogger().LogCustom("... start install of DQM ...");
             try
             {
                 base.Install();
-                using (DovSeedDataGenerator generator = new DovSeedDataGenerator())
-                {
-                    generator.GenerateSeedData();
-                }
+                //using (DqmSeedDataGenerator generator = new DovSeedDataGenerator())
+                //{
+                //    //generator.GenerateSeedData();
+                //}
             }
             catch (Exception e)
             {
@@ -29,7 +29,7 @@ namespace BExIS.Modules.Dov.UI
                 LoggerFactory.GetFileLogger().LogCustom(e.StackTrace);
             }
 
-            LoggerFactory.GetFileLogger().LogCustom("... end install of DOV ...");
+            LoggerFactory.GetFileLogger().LogCustom("... end install of DQM ...");
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.Data;
 
-namespace BExIS.Modules.Dov.UI.Models
+namespace BExIS.Modules.Dqm.UI.Models
 {
     public class DatasetsOverviewDataModel
     {

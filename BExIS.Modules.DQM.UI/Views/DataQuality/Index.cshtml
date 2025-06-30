@@ -1,9 +1,59 @@
-﻿@{
-    ViewBag.Title = "";
-    Layout = "~/Themes/Default/Layouts/_svelteLayout.cshtml";
+﻿@using BExIS.Utils.Extensions
+@{
+    string debugPath2 = "";
+    if (Html.IsDebug())
+    {
+        debugPath2 = "BExIS.Modules.Dqm.UI/";
+    }
+}
+
+@section scripts
+{
 
 }
 
 <div id="dataquality">
-    @Html.Partial("_sveltePage")
+
+
 </div>
+
+<script type="text/javascript">
+    // Dieses Flag hilft, das Modul nicht mehrfach zu laden, wenn der Hook mehrmals gerendert wird
+    if (!window.myDebugWebComponentModuleLoaded) {
+        window.myDebugWebComponentModuleLoaded = true;
+
+        // 1. Dynamisches Erstellen und Anhängen des MODUL-SKRIPTS
+        const script = document.createElement('script');
+        script.type = 'module'; // Ganz wichtig, damit es als Modul geladen wird!
+        script.src = '/Areas/DQM/BExIS.Modules.Dqm.UI/Scripts/data-quality.js';
+
+        // Füge das Skript dem Head hinzu (oder Body, Head ist aber oft bevorzugt für Module)
+        document.head.appendChild(script);
+
+       
+    } else {
+        console.log('Modul wurde bereits dynamisch angefordert.');
+    }
+
+    // 2. Warte, bis das Custom Element definiert ist, und füge es dann hinzu
+    // Dies wird ausgeführt, NACHDEM das Modul geladen und customElements.define aufgerufen hat.
+    customElements.whenDefined('data-quality').then(() => {
+       
+        const container = document.getElementById('dataquality'); // Dein Container-Div im Partial View
+        if (container) {
+            // Optional: Entferne alle bereits vorhandenen Instanzen des Widgets im Container,
+            // falls der Hook mehrfach geladen wird und alte, nicht funktionierende Instanzen bleiben könnten.
+            Array.from(container.querySelectorAll('my-debug-widget')).forEach(el => el.remove());
+
+            const widget = document.createElement('data-quality');
+            container.appendChild(widget);
+           
+        } else {
+            console.error('Fehler: Container mit ID "dataquality" wurde nicht gefunden.');
+        }
+    }).catch(error => {
+        console.error('Fehler beim Warten auf die Definition von my-debug-widget:', error);
+    });
+
+    
+</script>
