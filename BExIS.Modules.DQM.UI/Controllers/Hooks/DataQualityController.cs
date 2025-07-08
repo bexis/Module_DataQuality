@@ -15,15 +15,12 @@ namespace BExIS.Modules.Dqm.UI.Controllers.Legacy
     public class DataQualityController : Controller
     {
         // GET: DataQuality
-        public ActionResult Index()
+        public ActionResult Index(long id, int version)
         {
-            ////ViewBag.Title = PresentationModel.GetViewTitleForTenant("Dataset Overview", this.Session.GetTenant());
-            //string module = "DQM";
+           ViewBag.Id = id;
+           ViewBag.Version = version;
 
-            //ViewData["app"] = SvelteHelper.GetApp(module);
-            //ViewData["start"] = SvelteHelper.GetStart(module);
-
-            return PartialView("Index");
+           return PartialView("Index");
         }
 
         public ActionResult Test()
@@ -42,7 +39,7 @@ namespace BExIS.Modules.Dqm.UI.Controllers.Legacy
         public ActionResult Start(long id, int version = 0)
        {
             //return RedirectToAction("index", new { id, version });
-            return RedirectToAction("Index");
+            return RedirectToAction("Index", new { id, version });
         }
     }
 

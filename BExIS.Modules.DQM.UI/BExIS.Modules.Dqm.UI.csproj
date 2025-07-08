@@ -151,9 +151,8 @@
     <Content Include="web.config" />
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Dqm.Settings.json" />
-    <None Include="Properties\PublishProfiles\BexisServer_2030-testsite.pubxml" />
-    <None Include="Properties\PublishProfiles\BexisServer_BE-Website.pubxml" />
     <Content Include="Views\DataQuality\Index.cshtml" />
+    <None Include="Properties\PublishProfiles\BexisServer_2030-testsite.pubxml" />
     <None Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>
     </None>

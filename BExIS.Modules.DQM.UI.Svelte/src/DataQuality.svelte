@@ -23,6 +23,11 @@
 	Chart.defaults.font.family = 'inherit';
 	Chart.defaults.color = 'inherit';
 
+	export let datasetid;
+	export let version;
+	console.log("datasetId:", datasetid);
+	
+
     let pieDiv, barDiv,scatterDiv_temp, boxplotDiv, scatterDiv, duplicatesDiv, dupTableDiv, affectedVarDiv, barCatDiv, div;
 
 
@@ -44,29 +49,13 @@
 	 */
 	let ds_struct_date;
 	structured_datasets_date.subscribe((/** @type {string | any[]} */ value) => {
-		//console.log(value);
+
 		ds_struct_date = value;
 	});
-	$: id = 1000; //5764;
+	$: id = datasetid;
+
 
 onMount(async function() {
-
-	 // Beispiel: Testchart im pieDiv anzeigen
-    if (pieDiv) {
-        pieDiv.innerHTML = '';
-        const canvas = document.createElement('canvas');
-        canvas.width = 400;
-        canvas.height = 300;
-        pieDiv.appendChild(canvas);
-        new Chart(canvas.getContext('2d'), {
-            type: 'bar',
-            data: { labels: ['A', 'B'], datasets: [{ data: [1, 2] }] },
-            options: {
-                responsive: false,
-                maintainAspectRatio: false
-            }
-        });
-    }
 
     customElements.whenDefined('data-quality').then(() => {
     const el = document.querySelector('data-quality');
@@ -525,7 +514,7 @@ function show_boxplots() {
 
 
 <div class="min-h-screen bg-background text-primary font-sans p-6">
-	<div class="max-w-3xl mx-auto">
+	<div class="mx-auto">
 	<h2 class="pt-4 pb-4 text-secondary-700 dark:text-white">Data Quality</h2>
 	<!-- <div class="flex flex-row">
 		<div>
