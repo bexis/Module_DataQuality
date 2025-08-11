@@ -5,23 +5,14 @@
     {
         debugPath2 = "BExIS.Modules.Dqm.UI/";
     }
-}
 
-@section scripts
-{
-
-}
-
-<div id="dataquality">
-
-
-</div>
-
-@{
     var datasetId = ViewBag.Id ?? "";
     var datasetVersion = ViewBag.Version ?? "";
+    var scriptPath = "/Areas/DQM/"+ debugPath2 + "Scripts/data-quality.js";
 }
+
 <div id="dataquality"></div>
+
 <script type="text/javascript">
     // Werte direkt aus Razor in JS-Variablen
     const datasetId = "@datasetId";
@@ -29,9 +20,11 @@
 
     if (!window.dataQualityWebComponentLoaded) {
         window.dataQualityWebComponentLoaded = true;
+
         const script = document.createElement('script');
         script.type = 'module';
-        script.src = '/Areas/DQM/BExIS.Modules.Dqm.UI/Scripts/data-quality.js';
+        script.src = '@scriptPath';
+        console.log("Loading WebComponent from:", script.src); // Debug-Ausgabe
         document.head.appendChild(script);
     }
 

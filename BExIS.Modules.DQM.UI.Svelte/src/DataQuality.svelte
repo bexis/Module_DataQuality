@@ -352,8 +352,8 @@ function show_boxplots() {
         ) {
             const varName = v.variableName || v.VariableName || 'Variable';
             const boxDiv = document.createElement('div');
-            boxDiv.style.width = "400px";
-            boxDiv.style.height = "300px";
+            boxDiv.style.width = "fit-content";
+            boxDiv.style.height = "fit-content";
             boxDiv.id = 'boxplot_' + varName;
             boxplotDiv.appendChild(boxDiv);
 
@@ -395,8 +395,8 @@ function show_boxplots() {
             v.uniqueValues.length > 1
         ) {
             const scatterBox = document.createElement('div');
-            scatterBox.style.width = "400px";
-            scatterBox.style.height = "300px";
+            scatterBox.style.width = "fit-content";
+            scatterBox.style.height = "fit-content";
             scatterBox.id = 'scatter_' + (v.variableName || v.VariableName);
             scatterDiv.appendChild(scatterBox);
             show_unique_value_distribution(d, v, scatterBox);
@@ -422,8 +422,8 @@ function show_boxplots() {
 		d.allVariablen.forEach((v) => {
        const barCatBox = document.createElement('div');
         barCatBox.id = 'bar_cat_' + v.variableName;
-		barCatBox.style.width = "400px";
-		barCatBox.style.height = "300px";
+		barCatBox.style.width = "fit-content";
+		barCatBox.style.height = "fit-content";
         barCatDiv.appendChild(barCatBox);
 		console.log("barCatDiv data", v);
 
@@ -515,46 +515,7 @@ function show_boxplots() {
 
 <div class="min-h-screen bg-background text-primary font-sans p-6">
 	<div class="mx-auto">
-	<h2 class="pt-4 pb-4 text-secondary-700 dark:text-white">Data Quality</h2>
-	<!-- <div class="flex flex-row">
-		<div>
-			<label class="input-label w-96" for="dq">
-				<div class="input-group input-group-divider grid-cols-[auto_1fr_auto] rounded-md">
-					<select
-						class="select variant-form-material w-40"
-						id="dq"
-						bind:value={id}
-						disabled={loading}
-					>
-						{#each ds_struct as dataset, i}
-							<option class="bg-surface-500" value={dataset}>{dataset}</option>
-						{/each}
-					</select>
-					<input
-						class="w-10"
-						type="text"
-						id="name"
-						bind:value={id}
-						disabled={loading}
-						on:keypress={onKeyPress}
-					/>
-				</div>
-			</label>
-		</div>
-		<div>
-			<button class="btn bg-primary-500 rounded-md w-50 pl-20" on:click={showVis} disabled={loading}
-				>Show DQ</button
-			>
-		</div>
-	</div> -->
-	<!-- <div>
-		{#if ds_struct_date}<span class="italic">Cache date: {ds_struct_date}. </span><span
-				on:keypress={refreshCache}
-				on:click={refreshCache}
-				title="Refresh cache"><i class="fa-solid fa-rotate" /></span
-			>{/if}
-	</div> -->
-
+	
 	{#if error == true}
 		<p class="text-red-500 pt-2">An error occurred.</p>
 		<blockquote>
