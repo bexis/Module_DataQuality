@@ -25,7 +25,7 @@
 
 	export let datasetid;
 	export let version;
-	console.log("datasetId:", datasetid);
+	
 	
 
     let pieDiv, barDiv,scatterDiv_temp, boxplotDiv, scatterDiv, duplicatesDiv, dupTableDiv, affectedVarDiv, barCatDiv, div;
@@ -52,6 +52,8 @@
 
 		ds_struct_date = value;
 	});
+	//let testDatasetId = '2350';
+	//console.log("datasetId123d:", testDatasetId);
 	$: id = datasetid;
 
 
@@ -63,7 +65,7 @@ onMount(async function() {
         const style = document.createElement('style');
         style.textContent = css;
         el.shadowRoot.appendChild(style);
-        console.log("ShadowRoot gefunden und Style hinzugefügt!");
+        
     }else {
         console.log("Kein ShadowRoot gefunden!");
     }
@@ -72,37 +74,7 @@ onMount(async function() {
         await tick();
 		showVis();
 });
-	// onMount(async () => {
-
-	// 	await showVis();
-
-	//  const host = this; // Das Custom Element selbst
-    // if (host && host.shadowRoot) {
-    //     const style = document.createElement('style');
-    //     style.textContent = css;
-    //     host.shadowRoot.appendChild(style);
-    // }
-
-		// structured_datasets.useLocalStorage();
-		// url.useLocalStorage();
-		// token.useLocalStorage();
-		// api_version.useLocalStorage();
-
-		// if (ds_struct.length == 0) {
-		// 	refreshCache();
-		// }
-		// let headersList = {
-		// 	Accept: 'application/json',
-		// 	Authorization: 'Bearer ',
-		// 	'Content-Type': 'application/json'
-		// };
-		// const version = await get_version(headersList, $url.toString());
-		// api_version.set(version);
-
-
-
-	//});
-
+	
 	async function refreshCache() {
 		loading = true;
 		structured_datasets.set([]);
@@ -230,8 +202,7 @@ onMount(async function() {
 
 		//get all duplicates using api call
 		await getData(endpoint_data_quality, id).then((dt) => {
-			//console.log('duplicates', dt.DataTable);
-			duplicates = dt.DataTable;
+			duplicates = dt.dataTable;
 		});
 		loading = false;
 		//set and return the result for the visualization
@@ -276,9 +247,6 @@ onMount(async function() {
 		// create charts
 		getDQ(id).then((d) => {
 			statisticAPIdata = d;
-			console.log('statisticAPIdata', statisticAPIdata);	
-			//const pieDiv = document.getElementById('pie');
-			//console.log('pieDiv:', pieDiv, 'data:', d);
 			try {
   				completeness_pie(d, pieDiv);
 			} catch (e) {
@@ -291,7 +259,6 @@ onMount(async function() {
 			// @ts-ignore
 			duplicate_percent = show_duplicates(d);
 			onTabChange();
-			//console.log('doppelt', duplicate_percent);
 
 			//const boxplotDiv = document.getElementById('boxplot');
 // 			if (boxplotDiv) {
@@ -384,7 +351,6 @@ function show_boxplots() {
     }
 		 count_number = 0;
     d.allVariablen.forEach((v) => {
-		 console.log("Bubble-Check:", v);
         // ID-Spalten überspringen
         //if (isIdColumn(v)) return;
         // Nur numerische Variablen mit mindestens 2 verschiedenen Werten plotten
@@ -470,7 +436,6 @@ function show_boxplots() {
 	}
 
 	async function onTabChange() {
-    console.log("Tab gewechselt:", { tabsBasic, tabsMissingValues });
     await tick();
 
        setTimeout(() => {
