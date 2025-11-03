@@ -52,9 +52,9 @@
 
 		ds_struct_date = value;
 	});
-	let testDatasetId = '3020';
-	console.log("datasetId123d:", testDatasetId);
-	$: id = testDatasetId;
+	// let testDatasetId = '3020';
+	// console.log("datasetId123d:", testDatasetId);
+	$: id = datasetid;
 
 
 onMount(async function() {
