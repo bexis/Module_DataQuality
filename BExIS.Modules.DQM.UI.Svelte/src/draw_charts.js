@@ -48,13 +48,32 @@ Chart.register(
 	Title,
 	Tooltip
 );
+Chart.defaults.font.size = 24;       // ggf. 20/22, wenn du noch größer willst
+Chart.defaults.font.family = 'Arial, sans-serif';
 
 /**
  * @param {{ count: any; countRows?: number; countColumns?: number; countData: any; countMv: any; countNull: any; missingValues?: any[]; affectedVariablen?: any[]; allVariablen?: any[]; duplicates?: any[]; }} d
  * @param {HTMLElement | null} pieDiv
  */
+
+export function prepareCanvas(canvas, width = 800, height = 500) {
+  const ratio = window.devicePixelRatio || 1;
+  canvas.style.width = width + "px";
+  canvas.style.height = height + "px";
+  canvas.width = width * ratio;
+  canvas.height = height * ratio;
+
+  const ctx = canvas.getContext("2d");
+  ctx.scale(ratio, ratio);
+  return ctx;
+}
+
 export function completeness_pie(d, pieDiv) {
 	const pieCanvas = document.createElement('canvas');
+	pieCanvas.width = 700;               // Bitmap
+	pieCanvas.height = 450;
+	pieCanvas.style.width = '700px';     // CSS exakt gleich -> kein Blur
+	pieCanvas.style.height = '450px';
 	/**
 	 * @type {string[]}
 	 */
@@ -78,8 +97,9 @@ export function completeness_pie(d, pieDiv) {
 		backgroundColor.push('rgb(255,0,0)');
 		hoverBackgroundColor.push('rgba(255,0,0,0.8)');
 	}
+	const ctx = prepareCanvas(pieCanvas, 700, 450);
 
-	new Chart(pieCanvas.getContext('2d'), {
+	new Chart(ctx, {
 		type: 'pie',
 		data: {
 			//names of the legends in the pie
@@ -98,6 +118,9 @@ export function completeness_pie(d, pieDiv) {
 			borderWidth: 1,
 			responsive: false,
 			plugins: {
+				legend: {
+    			labels: { font: { size: 20 } }
+				},
 				datalabels: {
 					//set the percentage in the pie
 					formatter: (/** @type {number} */ value) => {
@@ -116,6 +139,8 @@ export function completeness_pie(d, pieDiv) {
 				//set the content of the tooltip
 				tooltip: {
 					backgroundColor: '#ff',
+					titleFont: { size: 18 },
+					bodyFont: { size: 18 },
 					enabled: true,
 					callbacks: {
 						label: function (/** @type {{ parsed: any; label: any; }} */ context) {
@@ -139,6 +164,12 @@ export function completeness_pie(d, pieDiv) {
  */
 export function completeness_bar(d, barDiv) {
 	const barCanvas = document.createElement('canvas');
+const w = 1000;
+const h = Math.max(450, d.affectedVariablen.length * 22);
+barCanvas.width = w;
+barCanvas.height = h;
+barCanvas.style.width = w + 'px';
+barCanvas.style.height = h + 'px';
 	//create needed data for the bar
 	const barData = {
 		labels: [],
@@ -240,7 +271,8 @@ export function completeness_bar(d, barDiv) {
 		});
 
 		//create the visualization bar
-		new Chart(barCanvas.getContext('2d'), {
+		const ctx = prepareCanvas(barCanvas, 1000, 500);
+		new Chart(ctx, {
 			type: 'bar',
 			data: barData,
 			options: {
@@ -270,6 +302,8 @@ export function completeness_bar(d, barDiv) {
 					tooltip: {
 						backgroundColor: '#ff',
 						enabled: true,
+						titleFont: { size: 20 },
+  						bodyFont: { size: 20 },
 						callbacks: {
 							label: function (
 								/** @type {{ parsed: { x: any; }; dataset: { label: any; }; }} */ context
@@ -292,11 +326,14 @@ export function completeness_bar(d, barDiv) {
 							display: true,
 							text: "Row's number",
 							font: {
-								family: 'Comic Sans MS',
-								size: 16,
+								family: 'Arial, sans-serif',
+								size: 20,
 								weight: 'bold'
 							}
 						},
+						 ticks: { font: { size: 18 } },
+  						max: d.countRows,
+  						stacked: true,
 						//x-axis represent the number the the rows in the table
 						max: d.countRows,
 						stacked: true
@@ -306,8 +343,8 @@ export function completeness_bar(d, barDiv) {
 							display: true,
 							text: 'Variables',
 							font: {
-								family: 'Comic Sans MS',
-								size: 16,
+								family: 'Arial, sans-serif',
+								size: 22,
 								weight: 'bold'
 							}
 						},
@@ -315,6 +352,7 @@ export function completeness_bar(d, barDiv) {
 
 						//if the name of the variables are very long, don't show the whole name, show just first 20 letter
 						ticks: {
+							 font: { size: 18 },
 							// @ts-ignore
 							callback: function (/** @type {any} */ index) {
 								// @ts-ignore
@@ -347,8 +385,11 @@ export function show_unique_value_distribution(d, v, scatterDiv) {
 	//this scatter show all values in on variable of the table
 	//const scatterDiv = document.getElementById("scatter");
 	const scatterCanvas = document.createElement('canvas');
-	scatterCanvas.width = 600; // explizit setzen!
-    scatterCanvas.height = 400;
+	const wS = 900, hS = 500;
+scatterCanvas.width = wS;
+scatterCanvas.height = hS;
+scatterCanvas.style.width = wS + 'px';
+scatterCanvas.style.height = hS + 'px';
 
 	/**
 	 * @param {{ labels: any[]; datasets: any[]; }} d
@@ -455,7 +496,8 @@ export function show_unique_value_distribution(d, v, scatterDiv) {
 		scatterDiv.innerHTML = '';
 	}
 	if (scatterData.datasets.length > 0) {
-		new Chart(scatterCanvas.getContext('2d'), {
+		const ctx = prepareCanvas(scatterCanvas, 1000, 500);
+		new Chart(ctx, {
 			type: 'bubble',
 			data: scatterData,
 			options: {
@@ -463,9 +505,21 @@ export function show_unique_value_distribution(d, v, scatterDiv) {
 				plugins: {
 					datalabels: {
 						display: false
-					}
-				}
-			}
+					},
+					legend: { labels: { font: { size: 18 } } },
+    				tooltip: { titleFont: { size: 18 }, bodyFont: { size: 18 } }
+				},
+				scales: {
+    x: {
+      title: { display: true, text: 'Index', font: { size: 20, weight: 'bold' } },
+      ticks: { font: { size: 18 } }
+    },
+    y: {
+      title: { display: true, text: v.variableName, font: { size: 20, weight: 'bold' } },
+      ticks: { font: { size: 18 } }
+    }
+  }
+}
 		});
 		scatterDiv?.appendChild(scatterCanvas);
 	}
@@ -476,57 +530,63 @@ export function show_unique_value_distribution(d, v, scatterDiv) {
  */
 export function show_dublicates(d) {
 	console.log('show_dublicates', d);
-	const dupTable = document.getElementById('dupTable');
-	const duplicates = document.getElementById('duplicates');
-	const dupDiv = document.createElement('div');
-	//dupDiv.innerText = 'Duplicates: 0%';
-	if (dupTable) {
-		dupTable.innerHTML = '';
-	}
-	if (duplicates) {
-		duplicates.innerHTML = '';
-	}
-	duplicates?.appendChild(dupDiv);
-	let dupPerc = 0;
-	//create table of all duplicates as html element
-	if (d.duplicates) {
-		const table = document.createElement('table');
-		const tHead = document.createElement('thead');
-		const tBody = document.createElement('tbody');
-		const tr = document.createElement('tr');
-		const headcount = document.createElement('th');
-		headcount.innerText = 'Duplicates';
-		tr.appendChild(headcount);
-		d.allVariablen.forEach((v) => {
-			const th = document.createElement('th');
-			th.innerText = v.variableName;
-			tr.appendChild(th);
-		});
-		tHead.appendChild(tr);
-		table.appendChild(tHead);
-		//dupSum is the number of all duplicates, wich can be deleted from the table
-		let dupSum = -d.duplicates.length;
-		d.duplicates.forEach((dup) => {
-			const tr = document.createElement('tr');
-			const dupCount = document.createElement('td');
-			dupCount.innerText = dup['count'];
-			dupSum += dup['count'];
-			tr.appendChild(dupCount);
-			d.allVariablen.forEach((v) => {
-				const td = document.createElement('td');
-				//get the values of cells bei id of the variable
-				td.innerText = dup['var' + v.VariableId];
-				tr.appendChild(td);
-			});
-			tBody.append(tr);
-			table.appendChild(tBody);
-		});
-		dupTable?.appendChild(table);
+	// allow caller to provide the container elements (works with shadow DOM)
+	// signature changed to: show_dublicates(d, dupTableElement, duplicatesElement)
+	// if the caller didn't pass them, fall back to global document lookup
+	// @ts-ignore - support optional args via arguments
+	const dupTableElement = arguments[1] ?? document.getElementById('dupTable');
+	const duplicatesElement = arguments[2] ?? document.getElementById('duplicates');
+	const dupTable = dupTableElement;
+	const duplicates = duplicatesElement;
+    const dupDiv = document.createElement('div');
+    //dupDiv.innerText = 'Duplicates: 0%';
+    if (dupTable) {
+        dupTable.innerHTML = '';
+    }
+    if (duplicates) {
+        duplicates.innerHTML = '';
+    }
+    duplicates?.appendChild(dupDiv);
+    let dupPerc = 0;
+    //create table of all duplicates as html element
+    if (d.duplicates) {
+        const table = document.createElement('table');
+        const tHead = document.createElement('thead');
+        const tBody = document.createElement('tbody');
+        const tr = document.createElement('tr');
+        const headcount = document.createElement('th');
+        headcount.innerText = 'Duplicates';
+        tr.appendChild(headcount);
+        d.allVariablen.forEach((v) => {
+            const th = document.createElement('th');
+            th.innerText = v.variableName;
+            tr.appendChild(th);
+        });
+        tHead.appendChild(tr);
+        table.appendChild(tHead);
+        //dupSum is the number of all duplicates, wich can be deleted from the table
+        let dupSum = -d.duplicates.length;
+        d.duplicates.forEach((dup) => {
+            const tr = document.createElement('tr');
+            const dupCount = document.createElement('td');
+            dupCount.innerText = dup['count'];
+            dupSum += dup['count'];
+            tr.appendChild(dupCount);
+            d.allVariablen.forEach((v) => {
+                const td = document.createElement('td');
+                //get the values of cells bei id of the variable
+                td.innerText = dup['var' + v.variableId];
+                tr.appendChild(td);
+            });
+            tBody.append(tr);
+            table.appendChild(tBody);
+        });
+        dupTable?.appendChild(table);
 
-		//set percentage of duplicates
+        //set percentage of duplicates
 
-		dupPerc = parseFloat(((dupSum / d.countRows) * 100).toFixed(20));
-	}
+        dupPerc = parseFloat(((dupSum / d.countRows) * 100).toFixed(20));
+    }
 	return dupPerc;
 }
 
@@ -542,6 +602,8 @@ export function boxplot(v, boxplotDiv) {
     const boxplotCanvas = document.createElement('canvas');
     boxplotCanvas.width = 600;
     boxplotCanvas.height = 400;
+	boxplotCanvas.style.width = '600px';
+	boxplotCanvas.style.height = '400px';
 
     const boxplotData = {
         labels: [],
@@ -583,7 +645,8 @@ export function boxplot(v, boxplotDiv) {
     });
 
     if (boxplotData.datasets.length > 0) {
-        new Chart(boxplotCanvas.getContext('2d'), {
+        const ctx = prepareCanvas(boxplotCanvas, 600, 400);
+        new Chart(ctx, {
             type: 'boxplot',
             data: boxplotData,
             options: {
@@ -598,11 +661,15 @@ export function boxplot(v, boxplotDiv) {
                     }
                 },
                 scales: {
+					x: {
+    				ticks: { font: { size: 18 } }
+				},
                     y: {
                         type: 'logarithmic',
                         //set the min and max of the y-axis
                         min: v.min - 1,
-                        max: v.max + 1
+                        max: v.max + 1,
+						ticks: { font: { size: 18 } }
                     }
                 }
             }
@@ -617,8 +684,11 @@ export function boxplot(v, boxplotDiv) {
  */
 export function bar_cat(v, barDiv) {
 	const barCanvas = document.createElement('canvas');
-	barCanvas.width = 600; // explizit setzen!
-	barCanvas.height = 200;	
+	barCanvas.width = 900; // explizit setzen!
+	barCanvas.height = Math.max(400, d.affectedVariablen.length * 20);	
+	barCanvas.style.width = '600px';
+	barCanvas.style.height = '200px';
+
 
 	//if the type of the vriable is string, there is no need for the visualizaion
 	const types = ['String'];
@@ -686,14 +756,19 @@ export function bar_cat(v, barDiv) {
 		barDiv.innerHTML = '';
 	}
 	if (barData.datasets.length > 0) {
-		new Chart(barCanvas.getContext('2d'), {
+		const ctx = prepareCanvas(barCanvas, 1000, 500);	
+		new Chart(ctx, {
 			type: 'bar',
 			data: barData,
 			options: {
 				responsive: false,
 				scales: {
+					 x: {
+      				ticks: { font: { size: 18 } }
+    				},
 					y: {
-						beginAtZero: true
+						beginAtZero: true,
+						ticks: { font: { size: 18 } }
 					}
 				}
 			}

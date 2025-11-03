@@ -52,9 +52,9 @@
 
 		ds_struct_date = value;
 	});
-	//let testDatasetId = '2350';
-	//console.log("datasetId123d:", testDatasetId);
-	$: id = datasetid;
+	let testDatasetId = '3020';
+	console.log("datasetId123d:", testDatasetId);
+	$: id = testDatasetId;
 
 
 onMount(async function() {
@@ -191,6 +191,7 @@ onMount(async function() {
 									missingValues.push(name);
 								}
 								if (affectedVariablen.indexOf(variable) === -1) {
+									console.log("affectedVariablen push:", variable);
 									affectedVariablen.push(variable);
 								}
 							}
@@ -257,8 +258,9 @@ onMount(async function() {
 			completeness_bar(d, barDiv);
 
 			// @ts-ignore
-			duplicate_percent = show_duplicates(d);
-			onTabChange();
+			// Übergib die an die Komponente gebundenen Container (Shadow DOM kompatibel)
+			duplicate_percent = show_duplicates(d, dupTableDiv, duplicatesDiv);
+            onTabChange();
 
 			//const boxplotDiv = document.getElementById('boxplot');
 // 			if (boxplotDiv) {
@@ -478,7 +480,7 @@ function show_boxplots() {
 </script>
 
 
-<div class="min-h-screen bg-background text-primary font-sans p-6">
+<div class="min-h-screen bg-background text-primary font-sans p-6 text-lg md:text-xl">
 	<div class="mx-auto">
 	
 	{#if error == true}
@@ -496,7 +498,7 @@ function show_boxplots() {
 			</div>
 		</div>
 	{:else}{/if}
-	<h3 class="pt-4 pb-4 text-secondary-700 dark:text-white">1. Duplicate Check</h3>
+	<h3 class="pt-4 pb-4 md:text-5xl text-secondary-700 dark:text-white">1. Duplicate Check</h3>
 	{#if duplicate_percent == 0}
 		<aside class="alert variant-ghost-success w-80">
 			<i class="fa-solid fa-circle-check text-2xl" />
@@ -538,7 +540,7 @@ function show_boxplots() {
 						<tr><th>Variable Name</th><th>Unit</th><th>Count NA</th><th>Count Null</th></tr>
 						{#each affectedVariablen as variable}
 							<tr
-								><td>{variable.variableName}</td><td>{variable.Unit}</td><td>{variable.NA}</td><td
+								><td>{variable.variableName}</td><td>{variable.unit}</td><td>{variable.na}</td><td
 									>{variable.NULL}</td
 								></tr
 							>
@@ -581,6 +583,16 @@ function show_boxplots() {
 
 
 <style>
+h3 {
+  font-size: 2rem;   /* ~40px */
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+p, td, th {
+  font-size: 1.125rem; /* ~18px */
+  line-height: 1.6;
+}
 	.dashbord {
 		display: flex;
 		flex-direction: column;
