@@ -70,7 +70,6 @@ onMount(async function() {
         console.log("Kein ShadowRoot gefunden!");
     }
 });
-    // showVis erst nach dem nächsten Tick aufrufen!
         await tick();
 		showVis();
 });
@@ -226,65 +225,36 @@ onMount(async function() {
 	// Create visualizations
 	//-------------------------------------------------------------------------
 	let duplicate_percent = -1;
-	const showVis = async function () {
-
-		 if (!boxplotDiv || !pieDiv || !barDiv || !scatterDiv || !barCatDiv) {
+	async function showVis() {
+    if (!boxplotDiv || !pieDiv || !barDiv || !scatterDiv || !barCatDiv) {
         console.warn('Ein oder mehrere Chart-Container sind noch nicht gesetzt!');
         return;
     }
-		// remove existing graphs
-		remove_content('scatter');
-		remove_content('pie');
-		remove_content('bar');
-		remove_content('duplicates');
-		remove_content('boxplot');
-		remove_content('dupTable');
-		remove_content('affectedVar');
-		remove_content('bar_cat');
+    // remove existing graphs
+    remove_content('scatter');
+    remove_content('pie');
+    remove_content('bar');
+    remove_content('duplicates');
+    remove_content('boxplot');
+    remove_content('dupTable');
+    remove_content('affectedVar');
+    remove_content('bar_cat');
 
-		// reset affected variables to ensure it is always filled new
-		affectedVariablen = [];
+    // reset affected variables to ensure it is always filled new
+    affectedVariablen = [];
 
-		// create charts
-		getDQ(id).then((d) => {
-			statisticAPIdata = d;
-			try {
-  				completeness_pie(d, pieDiv);
-			} catch (e) {
-  				console.error('Fehler beim Zeichnen des Charts:', e);
-			}
+    // create charts
+    getDQ(id).then((d) => {
+        statisticAPIdata = d;
+        try {
+            completeness_pie(d, pieDiv);
+        } catch (e) { /* Fehlerbehandlung */ }
 
-			//const barDiv = document.getElementById('bar');
-			completeness_bar(d, barDiv);
-
-			// @ts-ignore
-			// Übergib die an die Komponente gebundenen Container (Shadow DOM kompatibel)
-			duplicate_percent = show_duplicates(d, dupTableDiv, duplicatesDiv);
-            onTabChange();
-
-			//const boxplotDiv = document.getElementById('boxplot');
-// 			if (boxplotDiv) {
-// 				boxplotDiv.innerHTML = '';
-// 			}
-// 			d.allVariablen.forEach((v) => {
-				
-//     		console.log('Variable:', v);
-// 			 const boxDiv = document.createElement('div');
-//                 boxDiv.id = 'boxplot_' + v.variableName; // ID setzen
-//                 boxplotDiv.appendChild(boxDiv);
-// 				//const boxplotDiv_temp = document.getElementById('boxplot');
-// 				//boxplotDiv?.appendChild('beforeend', boxDiv);
-// 				//const boxplotDiv = document.getElementById('boxplot_' + v.VariableName);
-// 				boxplot(v, boxDiv);
-//     // ...
-// });
-				
-			
-
-			//bubble_plot();
-
-			//category_bar_plot();
-		});
+        // completeness_bar: pass affectedVarDiv (shadow DOM kompatibel)
+        completeness_bar(d, barDiv, affectedVarDiv);
+        duplicate_percent = show_duplicates(d, dupTableDiv, duplicatesDiv);
+        onTabChange();
+    });
 	}
 	
 
@@ -355,7 +325,6 @@ function show_boxplots() {
     d.allVariablen.forEach((v) => {
         // ID-Spalten überspringen
         //if (isIdColumn(v)) return;
-        // Nur numerische Variablen mit mindestens 2 verschiedenen Werten plotten
         const allowedTypes = ['Double', 'Int32', 'Int64', 'Decimal'];
         if (
             allowedTypes.includes(v.dataTypeSystemType) &&
@@ -469,7 +438,8 @@ function show_boxplots() {
             // Pie und Bar Chart für Missing Values
             if (statisticAPIdata) {
                 completeness_pie(statisticAPIdata, pieDiv);
-                completeness_bar(statisticAPIdata, barDiv);
+                // WICHTIG: affectedVarDiv mitgeben, sonst erscheint die Tabelle nicht
+                completeness_bar(statisticAPIdata, barDiv, affectedVarDiv);
             }
         }
         // Tab 1 (Table) braucht keine Chart-Visualisierung, nur Tabelle
@@ -498,61 +468,65 @@ function show_boxplots() {
 			</div>
 		</div>
 	{:else}{/if}
-	<h3 class="pt-4 pb-4 md:text-5xl text-secondary-700 dark:text-white">1. Duplicate Check</h3>
-	{#if duplicate_percent == 0}
-		<aside class="alert variant-ghost-success w-80">
-			<i class="fa-solid fa-circle-check text-2xl" />
-			<h3 class="alert-message">Duplicates: 0%</h3>
-		</aside>
-	{/if}
-	{#if duplicate_percent <= 10 && duplicate_percent > 0}
-		<aside class="alert variant-ghost-warning w-80">
-			<i class="fa-solid fa-circle-exclamation text-2xl" />
-			<h3 class="alert-message">Duplicates: {duplicate_percent.toFixed(4)}%</h3>
-		</aside>
-	{/if}
-	{#if duplicate_percent > 10}
-		<aside class="alert variant-ghost-error w-80">
-			<i class="fa-solid fa-circle-xmark text-2xl" />
-			<h3 class="alert-message">Duplicates: {duplicate_percent.toFixed(4)}%</h3>
-		</aside>
-	{/if}
-	<div id="duplicates" bind:this={duplicatesDiv}></div>
-	<div id="dupTable" bind:this={dupTableDiv}></div>
-	<h3 class="pt-4 pb-4 text-secondary-700 dark:text-white">2. Missing Value Check</h3>
+	<h2 class="pt-4 pb-4 md:text-5xl text-secondary-700 dark:text-white">1. Duplicate Check</h2>
+	<div class="ard flex flex-col p-4 shadow-lg ring-1 ring-gray-900/5">
+    {#if duplicate_percent == 0}
+        <aside class="alert variant-ghost-success w-96">
+            <i class="fa-solid fa-circle-check text-2xl" />
+            <h3 class="alert-message">Duplicates: 0%</h3>
+        </aside>
+    {/if}
+    {#if duplicate_percent <= 10 && duplicate_percent > 0}
+        <aside class="alert variant-ghost-warning w-96">
+            <i class="fa-solid fa-circle-exclamation text-2xl" />
+            <h3 class="alert-message">Duplicates: {duplicate_percent.toFixed(4)}%</h3>
+        </aside>
+    {/if}
+    {#if duplicate_percent > 10}
+        <aside class="alert variant-ghost-error w-96">
+            <i class="fa-solid fa-circle-xmark text-2xl" />
+            <h3 class="alert-message">Duplicates: {duplicate_percent.toFixed(4)}%</h3>
+        </aside>
+    {/if}
+</div>
+<div id="duplicates" bind:this={duplicatesDiv}></div>
+<div id="dupTable" bind:this={dupTableDiv}></div>
 
-	<TabGroup bind:group={tabsMissingValues}>
-		<Tab bind:group={tabsMissingValues} name="Graph" value={0}>Graph</Tab>
-		<Tab bind:group={tabsMissingValues} name="Table" value={1}>Table</Tab>
-		<svelte:fragment slot="panel">
-			<div hidden={tabsMissingValues !== 0}>
-				<div class="dashbord">
-					<div class="vollstContainer">
-						<div bind:this={pieDiv}></div>
-                        <div bind:this={barDiv}></div>
-                        <div bind:this={affectedVarDiv}></div>
-					</div>
-				</div>
-			</div>
-			<div hidden={tabsMissingValues !== 1}>
-				{#if affectedVariablen && affectedVariablen.length > 0}
-					<table>
-						<tr><th>Variable Name</th><th>Unit</th><th>Count NA</th><th>Count Null</th></tr>
-						{#each affectedVariablen as variable}
-							<tr
-								><td>{variable.variableName}</td><td>{variable.unit}</td><td>{variable.na}</td><td
-									>{variable.NULL}</td
-								></tr
-							>
-						{/each}
-					</table>
-				{/if}
-			</div>
-		</svelte:fragment>
-	</TabGroup>
-	<h3 class="pt-4 pb-4 text-secondary-700 dark:text-white">
+    <!-- 2. Missing Value Check -->
+    <h2 class="pt-4 pb-4 md:text-5xl text-secondary-700 dark:text-white">2. Missing Value Check</h2>
+    <TabGroup bind:group={tabsMissingValues}>
+        <Tab bind:group={tabsMissingValues} name="Graph" value={0}>Graph</Tab>
+        <Tab bind:group={tabsMissingValues} name="Table" value={1}>Table</Tab>
+        <svelte:fragment slot="panel">
+            <div hidden={tabsMissingValues !== 0}>
+                <div class="dashbord">
+                    <div class="vollstContainer">
+                        <div id="pie" bind:this={pieDiv}></div>
+                        <div id="bar" bind:this={barDiv}></div>
+                        <div id="affectedVar" bind:this={affectedVarDiv}></div>
+                    </div>
+                </div>
+            </div>
+            <div hidden={tabsMissingValues !== 1}>
+                {#if affectedVariablen && affectedVariablen.length > 0}
+                    <table>
+                        <tr><th>Variable Name</th><th>Unit</th><th>Count Null</th></tr>
+                        {#each affectedVariablen as variable}
+                            <tr>
+                                <td>{variable.variableName}</td>
+                                <td>{variable.unit}</td>
+                                <!-- <td>{variable.na}</td> -->
+                                <td>{variable.NULL}</td>
+                            </tr>
+                        {/each}
+                    </table>
+                {/if}
+            </div>
+        </svelte:fragment>
+    </TabGroup>
+	<h2 class="pt-4 pb-4 text-secondary-700 dark:text-white">
 		3. Distribution & Count of Unique Values
-	</h3>
+	</h2>
 
 	<TabGroup bind:group={tabsBasic} >
 		<!-- Tabs -->
@@ -584,85 +558,153 @@ function show_boxplots() {
 
 <style>
 h3 {
-  font-size: 2rem;   /* ~40px */
-  line-height: 1.2;
-  font-weight: 600;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+}
+
+h2 {
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
 }
 
 p, td, th {
-  font-size: 1.125rem; /* ~18px */
-  line-height: 1.6;
+    line-height: 1.6;
 }
-	.dashbord {
-		display: flex;
-		flex-direction: column;
-	}
 
-	.vollstContainer {
-		display: flex;
-	}
+.dashbord {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-start;
+}
 
-	#pie {
-		max-height: 40rem;
-		width: 20rem;
-		min-width: 20rem;
-		padding: 1rem;
-		margin: 1rem;
-		overflow: auto;
-	}
+.vollstContainer {
+    display: flex;
+    align-items: flex-start;
+    gap: 2rem;
+}
 
-	#bar {
-		max-height: 20rem;
-		width: 50rem;
-		min-width: 40rem;
-		padding: 1rem;
-		margin: 1rem;
-		overflow: auto;
-	}
+#pie {
+    min-width: 400px;
+    padding: 1rem;
+    margin: 1rem;
+}
 
-	#boxplot {
-		width: 50rem;
-		padding: 1rem;
-		margin: 1rem;
-		overflow: auto;
-	}
+#bar {
+    min-width: 400px;
+    padding: 1rem;
+    margin: 1rem;
+    overflow: visible;
+}
 
-	#scatter {
-		width: 50rem;
-	}
+#affectedVar {
+    margin-left: 2rem;
+    max-height: 25rem;
+    overflow: auto;
+    min-width: 20rem;
+}
 
-	#affectedVar {
-		max-height: 20rem;
-		overflow: auto;
-		min-width: max-content;
-	}
+#dupTable {
+    max-height: 30rem;
+    overflow: auto;
+    margin-top: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
 
-	#dupTable {
-		width: 40rem;
-		max-height: 20rem;
-		margin: 0.4rem;
-		overflow: auto;
-	}
+#dupTable table,
+#affectedVar table,
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    font-size: 0.875rem;
+}
 
-	#bar_cat {
-		max-height: 20rem;
-		width: 50rem;
-		min-width: 40rem;
-		padding: 1rem;
-		margin: 1rem;
-		overflow: auto;
-	}
+#dupTable table th,
+#affectedVar table th,
+table th {
+    background-color: #bee1da;
+    color: #2c3e50;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-bottom: 2px solid #95c9be;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
 
-	:global(#dupTable > table) {
-		width: 100%;
-	}
+#dupTable table td,
+#affectedVar table td,
+table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #dee2e6;
+    color: #212529;
+    white-space: nowrap;
+}
 
-	:global(table, th, td) {
-		border: 1px solid black;
-	}
+#dupTable table tbody tr:hover,
+#affectedVar table tbody tr:hover,
+table tbody tr:hover {
+    background-color: #e3f3f1;
+    cursor: pointer;
+}
 
-	#pie, #bar, #boxplot, #scatter, #bar_cat {
-    min-height: 300px;
-    min-width: 300px;
+#dupTable table tbody tr:nth-child(even),
+#affectedVar table tbody tr:nth-child(even),
+table tbody tr:nth-child(even) {
+    background-color: #f8fafa;
+}
+
+/* Highlighted row (für affected variables) */
+#affectedVar table tr[style*="background-color: #ff000050"],
+#affectedVar table tr[style*="background-color: rgb(255, 0, 0)"] {
+    background-color: #fff5f5 !important;
+    border-left: 3px solid #dc3545;
+}
+
+#affectedVar table tr[style*="background-color: #ff000050"]:hover,
+#affectedVar table tr[style*="background-color: rgb(255, 0, 0)"]:hover {
+    background-color: #ffe3e3 !important;
+}
+
+/* Scrollbar Styling */
+#dupTable,
+#affectedVar {
+    scrollbar-width: thin;
+    scrollbar-color: #95c9be #f7fafc;
+}
+
+#dupTable::-webkit-scrollbar,
+#affectedVar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+#dupTable::-webkit-scrollbar-track,
+#affectedVar::-webkit-scrollbar-track {
+    background: #f7fafc;
+    border-radius: 4px;
+}
+
+#dupTable::-webkit-scrollbar-thumb,
+#affectedVar::-webkit-scrollbar-thumb {
+    background-color: #95c9be;
+    border-radius: 4px;
+    border: 2px solid #f7fafc;
+}
+
+#dupTable::-webkit-scrollbar-thumb:hover,
+#affectedVar::-webkit-scrollbar-thumb:hover {
+    background-color: #7ab5a8;
+}
+
+#dupTable::-webkit-scrollbar-corner {
+    background-color: #f7fafc;
 }
 </style>

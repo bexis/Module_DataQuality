@@ -29,6 +29,9 @@ import { BoxPlotController, BoxAndWiskers } from '@sgratzl/chartjs-chart-boxplot
 // @ts-ignore
 Chart.defaults.color = 'white';
 
+// REMOVE double scaling: let Chart.js handle DPR itself
+// Chart.defaults.devicePixelRatio = window.devicePixelRatio || 1;
+
 // @ts-ignore
 Chart.register(
 	BoxPlotController,
@@ -48,8 +51,10 @@ Chart.register(
 	Title,
 	Tooltip
 );
-Chart.defaults.font.size = 24;       // ggf. 20/22, wenn du noch größer willst
+// Globale Font-Einstellungen - ERHÖHEN
+Chart.defaults.font.size = 18;  // Von 16 auf 18
 Chart.defaults.font.family = 'Arial, sans-serif';
+Chart.defaults.font.weight = 'bold';  // NEU: Fett für bessere Lesbarkeit
 
 /**
  * @param {{ count: any; countRows?: number; countColumns?: number; countData: any; countMv: any; countNull: any; missingValues?: any[]; affectedVariablen?: any[]; allVariablen?: any[]; duplicates?: any[]; }} d
@@ -57,24 +62,22 @@ Chart.defaults.font.family = 'Arial, sans-serif';
  */
 
 export function prepareCanvas(canvas, width = 800, height = 500) {
-  const ratio = window.devicePixelRatio || 1;
+  // Set CSS size (visual) and the drawing buffer to the SAME size.
+  // Chart.js will apply its own DPR scaling for crisp text.
   canvas.style.width = width + "px";
   canvas.style.height = height + "px";
-  canvas.width = width * ratio;
-  canvas.height = height * ratio;
-
-  const ctx = canvas.getContext("2d");
-  ctx.scale(ratio, ratio);
-  return ctx;
+  canvas.width = width;
+  canvas.height = height;
+  return canvas.getContext("2d");
 }
 
 export function completeness_pie(d, pieDiv) {
-	const pieCanvas = document.createElement('canvas');
-	pieCanvas.width = 700;               // Bitmap
-	pieCanvas.height = 450;
-	pieCanvas.style.width = '700px';     // CSS exakt gleich -> kein Blur
-	pieCanvas.style.height = '450px';
-	/**
+    const pieCanvas = document.createElement('canvas');
+    pieCanvas.width = 500;               
+    pieCanvas.height = 250;
+    pieCanvas.style.width = '500px';     
+    pieCanvas.style.height = '250px';
+    /**
 	 * @type {string[]}
 	 */
 	let labels = ['Data'];
@@ -97,53 +100,49 @@ export function completeness_pie(d, pieDiv) {
 		backgroundColor.push('rgb(255,0,0)');
 		hoverBackgroundColor.push('rgba(255,0,0,0.8)');
 	}
-	const ctx = prepareCanvas(pieCanvas, 700, 450);
+	const ctx = prepareCanvas(pieCanvas, 500, 250);
 
 	new Chart(ctx, {
 		type: 'pie',
 		data: {
-			//names of the legends in the pie
 			labels: labels,
 			datasets: [
 				{
-					//set the data for the pie
 					data: data,
 					backgroundColor: backgroundColor,
 					hoverBackgroundColor: hoverBackgroundColor
 				}
 			]
 		},
-		//options of the pie
 		options: {
 			borderWidth: 1,
 			responsive: false,
 			plugins: {
 				legend: {
-    			labels: { font: { size: 20 } }
+					labels: { 
+                        font: { size: 26, weight: 'bold' }  // Von 22 auf 26
+                    }
 				},
 				datalabels: {
-					//set the percentage in the pie
-					formatter: (/** @type {number} */ value) => {
+					formatter: (value) => {
 						return ((value * 100) / d.count).toFixed(2) + '%';
 					},
 					color: '#fff',
 					font: {
-						size: 18
+						size: 24,  // Von 20 auf 24
+						weight: 'bold'
 					},
-					//hide precentage in the pie, if is 0%
 					display: [d.countData > 0, d.countMv > 0, d.countNull > 0],
 					align: 'start',
-					//prevents the overlap of the percentage
 					offset: [-16, -32, -48]
 				},
-				//set the content of the tooltip
 				tooltip: {
 					backgroundColor: '#ff',
-					titleFont: { size: 18 },
-					bodyFont: { size: 18 },
+					titleFont: { size: 26, weight: 'bold' },  // Von 22 auf 26
+					bodyFont: { size: 24, weight: 'bold' },   // Von 22 auf 24
 					enabled: true,
 					callbacks: {
-						label: function (/** @type {{ parsed: any; label: any; }} */ context) {
+						label: function (context) {
 							const x = context.parsed;
 							if (x !== null) {
 								return `${context.label}: ${x} (${((x * 100) / d.count).toFixed(2)}%)`;
@@ -163,13 +162,13 @@ export function completeness_pie(d, pieDiv) {
  * @param {HTMLElement | null} barDiv
  */
 export function completeness_bar(d, barDiv) {
-	const barCanvas = document.createElement('canvas');
-const w = 1000;
-const h = Math.max(450, d.affectedVariablen.length * 22);
-barCanvas.width = w;
-barCanvas.height = h;
-barCanvas.style.width = w + 'px';
-barCanvas.style.height = h + 'px';
+    const barCanvas = document.createElement('canvas');
+    const w = 500;
+    const h = Math.max(250, d.affectedVariablen.length * 22);
+    barCanvas.width = w;
+    barCanvas.height = h;
+    barCanvas.style.width = w + 'px';
+    barCanvas.style.height = h + 'px';
 	//create needed data for the bar
 	const barData = {
 		labels: [],
@@ -240,140 +239,183 @@ barCanvas.style.height = h + 'px';
 	if (barDiv) {
 		barDiv.innerHTML = '';
 	}
-	//get html element of the table that used to show affected variables
-	const div = document.getElementById('affectedVar');
-	// @ts-ignore
-	if (div) {
-		div.innerHTML = '';
-	}
-	//if there is no affacted variable, then there is no need to create this visualization (the bar)
-	if (d.affectedVariablen.length > 0) {
-		// if there is a lot of affacted variables, then set the height of the bar biger to show it corretly
-		if (d.affectedVariablen.length > 10) {
-			barCanvas.height = d.affectedVariablen.length * 16;
-		}
+	// get html element of the table that used to show affected variables
+	// prefer the passed-in element (works with ShadowRoot), fallback to document lookup
+    // let affectedDiv = arguments[2] ?? document.getElementById('affectedVar');
+    // fallback to barDiv (so table is at least visible near chart) and debug
+    // if (!affectedDiv) {
+    //     console.warn('affectedVar not found in document; falling back to barDiv. Pass affectedVarDiv to completeness_bar.');
+    //     affectedDiv = barDiv ?? null;
+    // }
+    // if (affectedDiv) {
+    //     affectedDiv.innerHTML = '';
+    // }
 
-		//create table to show the names of the affected variables
-		const table = document.createElement('table');
-		div?.appendChild(table);
-		const head = document.createElement('tr');
-		table.appendChild(head);
-		const th = document.createElement('th');
-		th.innerText = `${d.affectedVariablen.length} of ${d.countColumns} variables are affected`;
-		head.appendChild(th);
-		d.allVariablen.forEach((/** @type {{ VariableName: string; }} */ v) => {
-			const tr = document.createElement('tr');
-			tr.innerText += v.variableName;
-			if (d.affectedVariablen.includes(v)) {
-				tr.style.backgroundColor = '#ff000050';
-			}
-			table.appendChild(tr);
-		});
+	// Prefer an explicit third argument (works with ShadowRoot). Do NOT silently fall back to barDiv,
+	// otherwise the table may be appended into the chart container.
+	// @ts-ignore - support optional args via arguments
+	const affectedDiv = arguments[2] ?? null;
+    if (!affectedDiv) {
+        console.warn('completeness_bar: no affectedVarDiv provided; table will not be rendered. Pass the bound affectedVar element as 3rd arg to place the table beside the chart.');
+    } else {
+        affectedDiv.innerHTML = '';
+    }
 
-		//create the visualization bar
-		const ctx = prepareCanvas(barCanvas, 1000, 500);
-		new Chart(ctx, {
-			type: 'bar',
-			data: barData,
-			options: {
-				responsive: false,
-				skipNull: true,
-				borderWidth: 1,
-				//set the y-axis as base (bar use usually x-axis)
-				indexAxis: 'y',
-				plugins: {
-					datalabels: {
-						//set the percentage in the bar
-						formatter: (/** @type {number} */ value) => {
-							if (value) {
-								const pr = ((value * 100) / d.countRows).toFixed(2);
-								// @ts-ignore
-								if (pr > 8) {
-									return pr + '%';
-								}
-							}
-							//if percentage 0% or 8%< then dont show it
-							return null;
-						},
-						display: 'auto'
-					},
+    if (d.affectedVariablen.length > 0) {
+        if (d.affectedVariablen.length > 10) {
+            barCanvas.height = d.affectedVariablen.length * 16;
+            barCanvas.style.height = barCanvas.height + 'px';
+        }
 
-					//set content of the tootip
-					tooltip: {
-						backgroundColor: '#ff',
-						enabled: true,
-						titleFont: { size: 20 },
-  						bodyFont: { size: 20 },
-						callbacks: {
-							label: function (
-								/** @type {{ parsed: { x: any; }; dataset: { label: any; }; }} */ context
-							) {
-								const x = context.parsed.x;
-								if (x !== null) {
-									return `${context.dataset.label}: ${x} (${((x * 100) / d.countRows).toFixed(
-										2
-									)}%)`;
-								}
-							}
-						}
-					}
-				},
+        // Tabelle rechts befüllen mit BExIS-Farben
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        const tbody = document.createElement('tbody');
+        
+        // Tabellen-Grundstyles
+        table.style.width = '100%';
+        table.style.borderCollapse = 'collapse';
+        table.style.backgroundColor = '#ffffff';
+        table.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+        table.style.fontSize = '0.875rem';
+        
+        // Header mit BExIS-Farben
+        const headRow = document.createElement('tr');
+        const th = document.createElement('th');
+        th.textContent = `${d.affectedVariablen.length} of ${d.countColumns} variables are affected`;
+        th.style.backgroundColor = '#bee1da';
+        th.style.color = '#2c3e50';
+        th.style.fontWeight = '600';
+        th.style.padding = '0.75rem 1rem';
+        th.style.borderBottom = '2px solid #95c9be';
+        th.style.whiteSpace = 'nowrap';
+        th.style.textAlign = 'left';
+        headRow.appendChild(th);
+        thead.appendChild(headRow);
+        table.appendChild(thead);
+        
+        // Body mit Zebra-Streifen
+        d.allVariablen.forEach((v, index) => {
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.textContent = v.variableName;
+            td.style.padding = '0.75rem 1rem';
+            td.style.borderBottom = '1px solid #dee2e6';
+            td.style.color = '#212529';
+            td.style.whiteSpace = 'nowrap';
+            
+            const isAffected = d.affectedVariablen.includes(v);
+            
+            // Hintergrundfarbe basierend auf Affected-Status
+            let originalBg;
+            if (isAffected) {
+                tr.style.backgroundColor = '#fff5f5';
+                tr.style.borderLeft = '3px solid #dc3545';
+                originalBg = '#fff5f5';
+            } else if (index % 2 === 1) {
+                tr.style.backgroundColor = '#f8fafa';
+                originalBg = '#f8fafa';
+            } else {
+                tr.style.backgroundColor = '#ffffff';
+                originalBg = '#ffffff';
+            }
+            
+            // Hover-Effekt
+            tr.addEventListener('mouseenter', function() {
+                if (isAffected) {
+                    this.style.backgroundColor = '#ffe3e3';
+                } else {
+                    this.style.backgroundColor = '#e3f3f1';
+                }
+                this.style.cursor = 'pointer';
+            });
+            
+            tr.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = originalBg;
+            });
+            
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+        });
+        
+        table.appendChild(tbody);
+        affectedDiv?.appendChild(table);
 
-				//costumes the x-axis and the y-axis (name and font of the axis)
-				scales: {
-					x: {
-						title: {
-							display: true,
-							text: "Row's number",
-							font: {
-								family: 'Arial, sans-serif',
-								size: 20,
-								weight: 'bold'
-							}
-						},
-						 ticks: { font: { size: 18 } },
-  						max: d.countRows,
-  						stacked: true,
-						//x-axis represent the number the the rows in the table
-						max: d.countRows,
-						stacked: true
-					},
-					y: {
-						title: {
-							display: true,
-							text: 'Variables',
-							font: {
-								family: 'Arial, sans-serif',
-								size: 22,
-								weight: 'bold'
-							}
-						},
-						stacked: true,
-
-						//if the name of the variables are very long, don't show the whole name, show just first 20 letter
-						ticks: {
-							 font: { size: 18 },
-							// @ts-ignore
-							callback: function (/** @type {any} */ index) {
-								// @ts-ignore
-								let label = this.getLabelForValue(index);
-								if (label.length > 20) {
-									label = label.substring(0, 20) + '...';
-								}
-								return label;
-							}
-						}
-					}
-				},
-				interaction: {
-					mode: 'index',
-					axis: 'y',
-					intersect: false
-				}
-			}
-		});
-		barDiv?.appendChild(barCanvas);
-	}
+        // WICHTIG: nicht zurück auf 500x250 skalieren → sonst Abschneiden/Blur
+        const ctx = prepareCanvas(barCanvas, w, barCanvas.height);
+        new Chart(ctx, {
+            type: 'bar',
+            data: barData,
+            options: {
+                responsive: false,
+                skipNull: true,
+                borderWidth: 1,
+                indexAxis: 'y',
+                plugins: {
+                    legend: {
+                        labels: { font: { size: 26, weight: 'bold' } }  // Von 22 auf 26
+                    },
+                    datalabels: {
+                        formatter: (value) => {
+                            if (value) {
+                                const pr = ((value * 100) / d.countRows).toFixed(2);
+                                return pr > 8 ? pr + '%' : null;
+                            }
+                            return null;
+                        },
+                        font: { size: 22, weight: 'bold' },  // Von 18 auf 22
+                        display: 'auto'
+                    },
+                    tooltip: {
+                        backgroundColor: '#fff',
+                        titleColor: '#000',
+                        bodyColor: '#000',
+                        enabled: true,
+                        titleFont: { size: 26, weight: 'bold' },  // Von 22 auf 26
+                        bodyFont: { size: 24, weight: 'bold' },   // Von 22 auf 24
+                        callbacks: {
+                            label: function (context) {
+                                const x = context.parsed.x;
+                                if (x !== null) {
+                                    return `${context.dataset.label}: ${x} (${((x * 100) / d.countRows).toFixed(2)}%)`;
+                                }
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: { 
+                            display: true, 
+                            text: "Row's number", 
+                            font: { size: 26, weight: 'bold' }  // Von 20 auf 26
+                        },
+                        ticks: { font: { size: 22, weight: 'bold' } },  // Von 18 auf 22
+                        max: d.countRows,
+                        stacked: true
+                    },
+                    y: {
+                        title: { 
+                            display: true, 
+                            text: 'Variables', 
+                            font: { size: 26, weight: 'bold' }  // Von 20 auf 26
+                        },
+                        stacked: true,
+                        ticks: {
+                            font: { size: 22, weight: 'bold' },  // Von 18 auf 22
+                            callback: function (index) {
+                                let label = this.getLabelForValue(index);
+                                if (label.length > 20) label = label.substring(0, 20) + '...';
+                                return label;
+                            }
+                        }
+                    }
+                },
+                interaction: { mode: 'index', axis: 'y', intersect: false }
+            }
+        });
+        barDiv?.appendChild(barCanvas);
+    }
 }
 
 /**
@@ -382,7 +424,7 @@ barCanvas.style.height = h + 'px';
  * @param {HTMLElement | null} scatterDiv
  */
 export function show_unique_value_distribution(d, v, scatterDiv) {
-	//this scatter show all values in on variable of the table
+    //this scatter show all values in on variable of the table
 	//const scatterDiv = document.getElementById("scatter");
 	const scatterCanvas = document.createElement('canvas');
 	const wS = 900, hS = 500;
@@ -506,17 +548,22 @@ scatterCanvas.style.height = hS + 'px';
 					datalabels: {
 						display: false
 					},
-					legend: { labels: { font: { size: 18 } } },
-    				tooltip: { titleFont: { size: 18 }, bodyFont: { size: 18 } }
+					legend: { 
+					labels: { font: { size: 26, weight: 'bold' } }  // Von 22 auf 26
+					},
+					tooltip: { 
+						titleFont: { size: 26, weight: 'bold' },  // Von 22 auf 26
+						bodyFont: { size: 24, weight: 'bold' }    // Von 22 auf 24
+					}
 				},
 				scales: {
     x: {
-      title: { display: true, text: 'Index', font: { size: 20, weight: 'bold' } },
-      ticks: { font: { size: 18 } }
+      title: { display: true, text: 'Index', font: { size: 28, weight: 'bold' } },
+      ticks: { font: { size: 24, weight: 'bold' } }
     },
     y: {
-      title: { display: true, text: v.variableName, font: { size: 20, weight: 'bold' } },
-      ticks: { font: { size: 18 } }
+      title: { display: true, text: v.variableName, font: { size: 28, weight: 'bold' } },
+      ticks: { font: { size: 24, weight: 'bold' } }
     }
   }
 }
@@ -529,69 +576,120 @@ scatterCanvas.style.height = hS + 'px';
  * @param {{ duplicates: any[]; allVariablen: any[]; countRows: number; }} d
  */
 export function show_dublicates(d) {
-	console.log('show_dublicates', d);
-	// allow caller to provide the container elements (works with shadow DOM)
-	// signature changed to: show_dublicates(d, dupTableElement, duplicatesElement)
-	// if the caller didn't pass them, fall back to global document lookup
-	// @ts-ignore - support optional args via arguments
-	const dupTableElement = arguments[1] ?? document.getElementById('dupTable');
-	const duplicatesElement = arguments[2] ?? document.getElementById('duplicates');
-	const dupTable = dupTableElement;
-	const duplicates = duplicatesElement;
-    const dupDiv = document.createElement('div');
-    //dupDiv.innerText = 'Duplicates: 0%';
+    console.log('show_dublicates', d);
+    
+    const dupTableElement = arguments[1] ?? document.getElementById('dupTable');
+    const duplicatesElement = arguments[2] ?? document.getElementById('duplicates');
+    const dupTable = dupTableElement;
+    const duplicates = duplicatesElement;
+    
     if (dupTable) {
         dupTable.innerHTML = '';
     }
     if (duplicates) {
         duplicates.innerHTML = '';
     }
-    duplicates?.appendChild(dupDiv);
+    
     let dupPerc = 0;
-    //create table of all duplicates as html element
-    if (d.duplicates) {
+    
+    if (d.duplicates && d.duplicates.length > 0) {
         const table = document.createElement('table');
         const tHead = document.createElement('thead');
         const tBody = document.createElement('tbody');
+        
+        // Tabellen-Grundstyles
+        table.style.width = '100%';
+        table.style.borderCollapse = 'collapse';
+        table.style.backgroundColor = '#ffffff';
+        table.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+        table.style.fontSize = '0.875rem';
+        
+        // Header Row mit BExIS-Farben
         const tr = document.createElement('tr');
         const headcount = document.createElement('th');
         headcount.innerText = 'Duplicates';
+        headcount.style.backgroundColor = '#bee1da';
+        headcount.style.color = '#2c3e50';
+        headcount.style.fontWeight = '600';
+        headcount.style.padding = '0.75rem 1rem';
+        headcount.style.borderBottom = '2px solid #95c9be';
+        headcount.style.whiteSpace = 'nowrap';
+        headcount.style.textAlign = 'left';
         tr.appendChild(headcount);
+        
         d.allVariablen.forEach((v) => {
             const th = document.createElement('th');
             th.innerText = v.variableName;
+            th.style.backgroundColor = '#bee1da';
+            th.style.color = '#2c3e50';
+            th.style.fontWeight = '600';
+            th.style.padding = '0.75rem 1rem';
+            th.style.borderBottom = '2px solid #95c9be';
+            th.style.whiteSpace = 'nowrap';
+            th.style.textAlign = 'left';
             tr.appendChild(th);
         });
+        
         tHead.appendChild(tr);
         table.appendChild(tHead);
-        //dupSum is the number of all duplicates, wich can be deleted from the table
+        
+        // Body Rows mit Zebra-Streifen und Hover
         let dupSum = -d.duplicates.length;
-        d.duplicates.forEach((dup) => {
+        d.duplicates.forEach((dup, index) => {
             const tr = document.createElement('tr');
+            
+            // Zebra-Streifen für gerade Zeilen
+            if (index % 2 === 1) {
+                tr.style.backgroundColor = '#f8fafa';
+            } else {
+                tr.style.backgroundColor = '#ffffff';
+            }
+            
             const dupCount = document.createElement('td');
             dupCount.innerText = dup['count'];
+            dupCount.style.fontWeight = '600';
+            dupCount.style.padding = '0.75rem 1rem';
+            dupCount.style.borderBottom = '1px solid #dee2e6';
+            dupCount.style.color = '#212529';
+            dupCount.style.whiteSpace = 'nowrap';
             dupSum += dup['count'];
             tr.appendChild(dupCount);
+            
             d.allVariablen.forEach((v) => {
                 const td = document.createElement('td');
-                //get the values of cells bei id of the variable
                 td.innerText = dup['var' + v.variableId];
+                td.style.padding = '0.75rem 1rem';
+                td.style.borderBottom = '1px solid #dee2e6';
+                td.style.color = '#212529';
+                td.style.whiteSpace = 'nowrap';
                 tr.appendChild(td);
             });
-            tBody.append(tr);
-            table.appendChild(tBody);
+            
+            // Hover-Effekt
+            const originalBg = index % 2 === 1 ? '#f8fafa' : '#ffffff';
+            tr.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = '#e3f3f1';
+                this.style.cursor = 'pointer';
+            });
+            
+            tr.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = originalBg;
+            });
+            
+            tBody.appendChild(tr);
         });
+        
+        table.appendChild(tBody);
         dupTable?.appendChild(table);
-
-        //set percentage of duplicates
 
         dupPerc = parseFloat(((dupSum / d.countRows) * 100).toFixed(20));
     }
-	return dupPerc;
+    
+    return dupPerc;
 }
 
 /**
- * @param {{ DataTypeSystemType: string; uniqueValues: any[]; missingValues: { placeholder: any; }[]; VariableName: string; min: number; max: number; }} v
+ * @param {{ DataTypeSystemType: string; uniqueValues: any[]; missingValues: { placeholder: any; }[]; VariableName: string; }} v
  * @param {HTMLElement | null} boxplotDiv
  */
 export function boxplot(v, boxplotDiv) {
@@ -652,11 +750,18 @@ export function boxplot(v, boxplotDiv) {
             options: {
                 responsive: false,
                 plugins: {
+                    legend: {
+                        labels: { font: { size: 26, weight: 'bold' } }  // Von 22 auf 26
+                    },
                     datalabels: {
                         display: false
                     },
                     tooltip: {
-                        backgroundColor: '#ff',
+                        backgroundColor: '#fff',
+                        titleColor: '#000',
+                        bodyColor: '#000',
+                        titleFont: { size: 26, weight: 'bold' },  // Von 22 auf 26
+                        bodyFont: { size: 24, weight: 'bold' },   // Von 22 auf 24
                         enabled: true
                     }
                 },
@@ -665,11 +770,16 @@ export function boxplot(v, boxplotDiv) {
     				ticks: { font: { size: 18 } }
 				},
                     y: {
+                        title: {
+                            display: true,
+                            text: 'Value',
+                            font: { size: 26, weight: 'bold' }  // NEU
+                        },
                         type: 'logarithmic',
                         //set the min and max of the y-axis
                         min: v.min - 1,
                         max: v.max + 1,
-						ticks: { font: { size: 18 } }
+						ticks: { font: { size: 22, weight: 'bold' } }  // Von 18 auf 22
                     }
                 }
             }
@@ -683,11 +793,15 @@ export function boxplot(v, boxplotDiv) {
  * @param {HTMLElement | null} barDiv
  */
 export function bar_cat(v, barDiv) {
-	const barCanvas = document.createElement('canvas');
-	barCanvas.width = 900; // explizit setzen!
-	barCanvas.height = Math.max(400, d.affectedVariablen.length * 20);	
-	barCanvas.style.width = '600px';
-	barCanvas.style.height = '200px';
+    const barCanvas = document.createElement('canvas');
+    // Height based on top 20 categories at most
+    const categories = Math.min(20, (v.uniqueValues?.length || 0));
+    const w = 1000;
+    const h = Math.max(300, 24 * categories + 120);
+    barCanvas.width = w;
+    barCanvas.height = h;
+    barCanvas.style.width = w + 'px';
+    barCanvas.style.height = h + 'px';
 
 
 	//if the type of the vriable is string, there is no need for the visualizaion
@@ -756,21 +870,28 @@ export function bar_cat(v, barDiv) {
 		barDiv.innerHTML = '';
 	}
 	if (barData.datasets.length > 0) {
-		const ctx = prepareCanvas(barCanvas, 1000, 500);	
+		const ctx = prepareCanvas(barCanvas, w, h);
 		new Chart(ctx, {
 			type: 'bar',
 			data: barData,
 			options: {
 				responsive: false,
 				scales: {
-					 x: {
-      				ticks: { font: { size: 18 } }
-    				},
-					y: {
-						beginAtZero: true,
-						ticks: { font: { size: 18 } }
-					}
-				}
+                    x: { title: {
+                        display: true,
+                        text: 'Categories',
+                        font: { size: 26, weight: 'bold' }  // Von 20 auf 26
+                    },
+                    ticks: { font: { size: 22, weight: 'bold' } } },
+                    y: { 
+                        title: {
+                            display: true,
+                            text: 'Count',
+                            font: { size: 26, weight: 'bold' }  // Von 20 auf 26
+                        },
+                        beginAtZero: true, 
+                        ticks: { font: { size: 22, weight: 'bold' } } }
+                }
 			}
 		});
 		barDiv?.appendChild(barCanvas);
