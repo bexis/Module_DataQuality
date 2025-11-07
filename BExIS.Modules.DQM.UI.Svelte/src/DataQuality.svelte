@@ -52,9 +52,9 @@
 
 		ds_struct_date = value;
 	});
-	// let testDatasetId = '3020';
-	// console.log("datasetId123d:", testDatasetId);
-	$: id = datasetid;
+	let testDatasetId = '26487';
+	console.log("datasetId123d:", testDatasetId);
+	$: id = testDatasetId;
 
 
 onMount(async function() {
@@ -226,7 +226,7 @@ onMount(async function() {
 	//-------------------------------------------------------------------------
 	let duplicate_percent = -1;
 	async function showVis() {
-    if (!boxplotDiv || !pieDiv || !barDiv || !scatterDiv || !barCatDiv) {
+    if (!pieDiv || !barDiv || !scatterDiv || !barCatDiv) {
         console.warn('Ein oder mehrere Chart-Container sind noch nicht gesetzt!');
         return;
     }
@@ -266,48 +266,48 @@ function isIdColumn(variable) {
     return allUnique && variable.uniqueValues.length === variable.count;
 }
 
-function show_boxplots() {
-    if (!boxplotDiv) {
-        console.warn('boxplotDiv ist noch nicht gesetzt!');
-        return;
-    }
-    boxplotDiv.innerHTML = '';
-    const d = statisticAPIdata;
-    if (!d || !d.allVariablen) return;
+// function show_boxplots() {
+//     if (!boxplotDiv) {
+//         console.warn('boxplotDiv ist noch nicht gesetzt!');
+//         return;
+//     }
+//     boxplotDiv.innerHTML = '';
+//     const d = statisticAPIdata;
+//     if (!d || !d.allVariablen) return;
 
-    d.allVariablen.forEach((v) => {
-        // ID-Spalten überspringen
-        if (isIdColumn(v)) {
-            console.log('ID-Spalte erkannt und übersprungen:', v.variableName || v.VariableName);
-            return;
-        }
-        // Numerische Variablen mit mindestens 2 verschiedenen Werten
-        const type = v.DataTypeSystemType || v.dataTypeSystemType;
-        const allowedTypes = ['Double', 'Int32', 'Int64', 'Decimal'];
-        if (
-            allowedTypes.includes(type) &&
-            v.uniqueValues &&
-            v.uniqueValues.length > 1
-        ) {
-            const varName = v.variableName || v.VariableName || 'Variable';
-            const boxDiv = document.createElement('div');
-            boxDiv.style.width = "fit-content";
-            boxDiv.style.height = "fit-content";
-            boxDiv.id = 'boxplot_' + varName;
-            boxplotDiv.appendChild(boxDiv);
+//     d.allVariablen.forEach((v) => {
+//         // ID-Spalten überspringen
+//         if (isIdColumn(v)) {
+//             console.log('ID-Spalte erkannt und übersprungen:', v.variableName || v.VariableName);
+//             return;
+//         }
+//         // Numerische Variablen mit mindestens 2 verschiedenen Werten
+//         const type = v.DataTypeSystemType || v.dataTypeSystemType;
+//         const allowedTypes = ['Double', 'Int32', 'Int64', 'Decimal'];
+//         if (
+//             allowedTypes.includes(type) &&
+//             v.uniqueValues &&
+//             v.uniqueValues.length > 1
+//         ) {
+//             const varName = v.variableName || v.VariableName || 'Variable';
+//             const boxDiv = document.createElement('div');
+//             boxDiv.style.width = "fit-content";
+//             boxDiv.style.height = "fit-content";
+//             boxDiv.id = 'boxplot_' + varName;
+//             boxplotDiv.appendChild(boxDiv);
 
-            // Optional: Titel und Legende setzen
-            boxplot(
-                {
-                    ...v,
-                    label: varName,
-                    legend: varName
-                },
-                boxDiv
-            );
-        }
-    });
-}
+//             // Optional: Titel und Legende setzen
+//             boxplot(
+//                 {
+//                     ...v,
+//                     label: varName,
+//                     legend: varName
+//                 },
+//                 boxDiv
+//             );
+//         }
+//     });
+//}
 	/**
 	 * @type {number}
 	 */
@@ -362,7 +362,7 @@ function show_boxplots() {
 		barCatBox.style.width = "fit-content";
 		barCatBox.style.height = "fit-content";
         barCatDiv.appendChild(barCatBox);
-		console.log("barCatDiv data", v);
+		// console.log("barCatDiv data", v);
 
 			//const barDiv_temp = document.getElementById('bar_cat');
 			//barDiv?.appendChild('beforeend', barCatBox);
@@ -469,7 +469,7 @@ function show_boxplots() {
 		</div>
 	{:else}{/if}
 	<h2 class="pt-4 pb-4 md:text-5xl text-secondary-700 dark:text-white">1. Duplicate Check</h2>
-	<div class="ard flex flex-col p-4 shadow-lg ring-1 ring-gray-900/5">
+	<div class="duplicate-card {duplicate_percent === 0 ? 'duplicate-success' : duplicate_percent <= 10 ? 'duplicate-warning' : 'duplicate-error'}">
     {#if duplicate_percent == 0}
         <aside class="alert variant-ghost-success w-96">
             <i class="fa-solid fa-circle-check text-2xl" />
@@ -510,13 +510,13 @@ function show_boxplots() {
             <div hidden={tabsMissingValues !== 1}>
                 {#if affectedVariablen && affectedVariablen.length > 0}
                     <table>
-                        <tr><th>Variable Name</th><th>Unit</th><th>Count Null</th></tr>
+                        <tr><th>Variable Name</th><th>Unit</th><th>Count NA</th><th>Count Null</th></tr>
                         {#each affectedVariablen as variable}
                             <tr>
                                 <td>{variable.variableName}</td>
-                                <td>{variable.unit}</td>
-                                <!-- <td>{variable.na}</td> -->
-                                <td>{variable.NULL}</td>
+                                <td>{variable.unit || 'none'}</td>
+                                <td>{variable.NA ?? 0}</td>
+                                <td>{variable.NULL ?? 0}</td>
                             </tr>
                         {/each}
                     </table>
@@ -533,9 +533,9 @@ function show_boxplots() {
 		<Tab bind:group={tabsBasic} name="Bubble Plot (number)" value={0}
 			>Bubble Plot (#)<sup class="badge variant-filled-primary">{count_number}</sup></Tab
 		>
-		<Tab bind:group={tabsBasic} name="Box-Whisker-Plot (number)" value={1}
+		<!-- <Tab bind:group={tabsBasic} name="Box-Whisker-Plot (number)" value={1}
 			>Box-Whisker-Plot (#)<sup class="badge variant-filled-primary">{count_number}</sup></Tab
-		>
+		> -->
 		<Tab bind:group={tabsBasic} name="Bar Plot (text)" value={2}
 			>Bar Plot (text)<sup class="badge variant-filled-primary">{count_text}</sup></Tab
 		>
@@ -545,7 +545,7 @@ function show_boxplots() {
 		<!-- Panel -->
 		<svelte:fragment slot="panel">
 			<div hidden={tabsBasic !== 0} id="scatter" bind:this={scatterDiv}></div>
-			<div hidden={tabsBasic !== 1} id="boxplot" bind:this={boxplotDiv} ></div>
+			<!-- <div hidden={tabsBasic !== 1} id="boxplot" bind:this={boxplotDiv} ></div> -->
 			<div hidden={tabsBasic !== 2} id="bar_cat" bind:this={barCatDiv} > </div>
 			<div hidden={tabsBasic !== 3}>
 				<p class="pt-2">Sorry, no visualization available.</p>
@@ -558,8 +558,8 @@ function show_boxplots() {
 
 <style>
 h3 {
-    font-size: 1rem;
-    font-weight: 500;
+    font-size: 1.4rem;
+    /* font-weight: 500; */
     margin-bottom: 1rem;
 }
 
@@ -602,8 +602,67 @@ p, td, th {
 #affectedVar {
     margin-left: 2rem;
     max-height: 25rem;
-    overflow: auto;
+    overflow-y: auto;     /* Nur vertikales Scrollen */
+    overflow-x: hidden;   /* Kein horizontales Scrollen */
     min-width: 20rem;
+    position: relative;   /* Für sticky header */
+}
+
+#affectedVar table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    font-size: 0.875rem;
+}
+
+#affectedVar table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+#affectedVar table th {
+    background-color: #bee1da;
+    color: #2c3e50;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-bottom: 2px solid #95c9be;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+#affectedVar table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #dee2e6;
+    color: #212529;
+}
+
+/* Betroffene Variablen (ROT) */
+#affectedVar table tr.affected {
+    background-color: #ffbfbf !important;
+    border-left: 3px solid #dc3545;
+}
+
+#affectedVar table tr.affected:hover {
+    background-color: #ff9999 !important;
+}
+
+/* Nicht betroffene Variablen */
+#affectedVar table tbody tr:hover {
+    background-color: #e3f3f1;
+    cursor: pointer;
+}
+
+#affectedVar table tbody tr:nth-child(even) {
+    background-color: #f8fafa;
+}
+
+#affectedVar table tbody tr:nth-child(odd) {
+    background-color: #ffffff;
 }
 
 #dupTable {
@@ -621,7 +680,7 @@ table {
     border-collapse: collapse;
     background-color: #ffffff;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    font-size: 0.875rem;
+    font-size: 1.5rem;
 }
 
 #dupTable table th,
@@ -706,5 +765,31 @@ table tbody tr:nth-child(even) {
 
 #dupTable::-webkit-scrollbar-corner {
     background-color: #f7fafc;
+}
+
+.duplicate-card {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(17, 24, 39, 0.05);
+    border-radius: 0.375rem;
+    margin-bottom: 1rem;
+    transition: background-color 0.3s ease;
+}
+
+.duplicate-card.duplicate-success {
+    background-color: #daf0ec; 
+    border-color: #c3e6cb;
+}
+
+.duplicate-card.duplicate-warning {
+    background-color: #ffe5bf; 
+    border-color: #ffeeba;
+}
+
+.duplicate-card.duplicate-error {
+    background-color: #ffe5bf; 
+    border-color: #f5c6cb;
 }
 </style>

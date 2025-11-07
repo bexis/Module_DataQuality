@@ -85,20 +85,20 @@ export function completeness_pie(d, pieDiv) {
 	 * @type {any[]}
 	 */
 	let data = [d.countData];
-	let backgroundColor = ['rgb(50,205,50)'];
-	let hoverBackgroundColor = ['rgba(50,205,50,0.8)'];
+	let backgroundColor = ['rgba(218, 240, 236, 1)'];
+	let hoverBackgroundColor = ['rgba(218, 240, 236, 1)'];
 
 	if (d.countMv > 0) {
 		labels.push('Missing Values');
 		data.push(d.countMv);
-		backgroundColor.push('rgb(255,165,0)');
-		hoverBackgroundColor.push('rgba(255,165,0,0.8)');
+		backgroundColor.push('rgb(255,229,191, 1)');
+		hoverBackgroundColor.push('rgba(255,229,191,1)');
 	}
 	if (d.countNull > 0) {
 		labels.push('NULL');
 		data.push(d.countNull);
-		backgroundColor.push('rgb(255,0,0)');
-		hoverBackgroundColor.push('rgba(255,0,0,0.8)');
+		backgroundColor.push('rgba(255,191,191, 1)');
+		hoverBackgroundColor.push('rgba(255,191,191,1)');
 	}
 	const ctx = prepareCanvas(pieCanvas, 500, 250);
 
@@ -184,9 +184,9 @@ export function completeness_bar(d, barDiv) {
 	];
 	//definde background colors on hover of the first 5 missing values type
 	const bcs = [
-		'rgb(255, 159, 64)',
-		'rgb(54, 162, 235)',
-		'rgb(153, 102, 255)',
+		'rgb(255, 229, 191)',
+		'rgb(229, 243, 240)',
+		'rgb(210, 234, 229)',
 		'rgb(75, 192, 192)',
 		'rgb(201, 203, 207)'
 	];
@@ -213,8 +213,8 @@ export function completeness_bar(d, barDiv) {
 	const nullsDataset = {
 		label: 'NULL',
 		data: [],
-		backgroundColor: 'rgba(255, 99, 132, 0.2)',
-		borderColor: 'rgb(255, 99, 132)'
+		backgroundColor: 'rgba(255,191,191, 1)',
+		borderColor: 'rgba(0, 0, 0, 0.45)'
 	};
 	// @ts-ignore
 	barData.datasets.push(nullsDataset);
@@ -277,9 +277,9 @@ export function completeness_bar(d, barDiv) {
         table.style.borderCollapse = 'collapse';
         table.style.backgroundColor = '#ffffff';
         table.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
-        table.style.fontSize = '0.875rem';
+        table.style.fontSize = '1.3rem';
         
-        // Header mit BExIS-Farben
+        // Header mit BExIS-Farben und STICKY Position
         const headRow = document.createElement('tr');
         const th = document.createElement('th');
         th.textContent = `${d.affectedVariablen.length} of ${d.countColumns} variables are affected`;
@@ -290,11 +290,14 @@ export function completeness_bar(d, barDiv) {
         th.style.borderBottom = '2px solid #95c9be';
         th.style.whiteSpace = 'nowrap';
         th.style.textAlign = 'left';
+        th.style.position = 'sticky';  // STICKY HEADER
+        th.style.top = '0';            // Bleibt oben beim Scrollen
+        th.style.zIndex = '10';        // Über anderen Elementen
         headRow.appendChild(th);
         thead.appendChild(headRow);
         table.appendChild(thead);
         
-        // Body mit Zebra-Streifen
+        // Body mit korrigiertem Farbverhalten
         d.allVariablen.forEach((v, index) => {
             const tr = document.createElement('tr');
             const td = document.createElement('td');
@@ -304,33 +307,38 @@ export function completeness_bar(d, barDiv) {
             td.style.color = '#212529';
             td.style.whiteSpace = 'nowrap';
             
-            const isAffected = d.affectedVariablen.includes(v);
+            // Prüfe, ob Variable betroffen ist
+            const isAffected = d.affectedVariablen.some(av => av.variableId === v.variableId);
             
-            // Hintergrundfarbe basierend auf Affected-Status
+            // Setze Hintergrundfarben basierend auf Affected-Status
             let originalBg;
             if (isAffected) {
-                tr.style.backgroundColor = '#fff5f5';
+                // Betroffene Variablen: Rot-Töne
+                tr.style.backgroundColor = '#ffbfbf';
                 tr.style.borderLeft = '3px solid #dc3545';
-                originalBg = '#fff5f5';
+                originalBg = '#ffbfbf';
             } else if (index % 2 === 1) {
+                // Nicht betroffene, ungerade Zeilen: Helles Grau
                 tr.style.backgroundColor = '#f8fafa';
                 originalBg = '#f8fafa';
             } else {
+                // Nicht betroffene, gerade Zeilen: Weiß
                 tr.style.backgroundColor = '#ffffff';
                 originalBg = '#ffffff';
             }
             
-            // Hover-Effekt
+            // Hover-Effekt: Unterschiedliche Farben für affected/nicht-affected
             tr.addEventListener('mouseenter', function() {
                 if (isAffected) {
-                    this.style.backgroundColor = '#ffe3e3';
+                    this.style.backgroundColor = '#ff9999';  // Dunkleres Rot beim Hover
                 } else {
-                    this.style.backgroundColor = '#e3f3f1';
+                    this.style.backgroundColor = '#e3f3f1';  // Türkis beim Hover
                 }
                 this.style.cursor = 'pointer';
             });
             
             tr.addEventListener('mouseleave', function() {
+                // Zurück zur Original-Farbe
                 this.style.backgroundColor = originalBg;
             });
             
@@ -478,7 +486,7 @@ scatterCanvas.style.height = hS + 'px';
 		return obj.count !== max;
 	});
 	const max_new = Math.max(...without_max.map((/** @type {{ count: any; }} */ o) => o.count));
-	console.log(max, min, max_new, max / max_new);
+	// console.log(max, min, max_new, max / max_new);
 	let text = '';
 	let add = '';
 	if (max / max_new < 10) {
@@ -522,7 +530,7 @@ scatterCanvas.style.height = hS + 'px';
 			});
 		});
 	}
-	console.log(points);
+	// console.log(points);
 	// @ts-ignore
 	scatterData.datasets.push({
 		label: v.variableName + text + add,
@@ -532,7 +540,7 @@ scatterCanvas.style.height = hS + 'px';
 		borderWidth: 1
 	});
 	//	});
-	console.log(scatterDiv, 'scatter');
+	// console.log(scatterDiv, 'scatter');
 	// @ts-ignore
 	if (scatterDiv) {
 		scatterDiv.innerHTML = '';
@@ -576,7 +584,7 @@ scatterCanvas.style.height = hS + 'px';
  * @param {{ duplicates: any[]; allVariablen: any[]; countRows: number; }} d
  */
 export function show_dublicates(d) {
-    console.log('show_dublicates', d);
+    // console.log('show_dublicates', d);
     
     const dupTableElement = arguments[1] ?? document.getElementById('dupTable');
     const duplicatesElement = arguments[2] ?? document.getElementById('duplicates');
@@ -602,7 +610,7 @@ export function show_dublicates(d) {
         table.style.borderCollapse = 'collapse';
         table.style.backgroundColor = '#ffffff';
         table.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
-        table.style.fontSize = '0.875rem';
+        table.style.fontSize = '1.3rem';
         
         // Header Row mit BExIS-Farben
         const tr = document.createElement('tr');
@@ -845,7 +853,7 @@ export function bar_cat(v, barDiv) {
 		}
 		i = i + 1;
 	});
-	console.log('bar_cat', data, label);
+	// console.log('bar_cat', data, label);
 	// @ts-ignore
 	let barData = {
 		labels: [],
@@ -858,7 +866,7 @@ export function bar_cat(v, barDiv) {
 		label: v.variableName + ' (max 20 with most counts)',
 		data: data,
 		borderColor: 'rgb(54, 162, 235)', //border color of the dataset
-		backgroundColor: 'rgb(54, 162, 235, 02)', //background color of the dataset
+		backgroundColor: 'rgba(190, 225, 218, 1)', //background color of the dataset
 		barPercentage: 0.5,
 		barThickness: 6,
 		maxBarThickness: 8,
