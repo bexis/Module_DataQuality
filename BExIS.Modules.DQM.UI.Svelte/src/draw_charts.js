@@ -71,6 +71,35 @@ export function prepareCanvas(canvas, width = 800, height = 500) {
   return canvas.getContext("2d");
 }
 
+// TextZoom-Plugin: vergrößert nur Text im Canvas, ohne Canvas/Chart zu skalieren
+const TextZoomPlugin = {
+  id: 'textZoom',
+  beforeInit(chart, _args, opts) {
+    const factor = Math.max(1, (opts && opts.factor) || 1.5);
+    const ctx = chart.ctx;
+    if (!ctx || ctx.__textZoomApplied) return;
+    ctx.__textZoomApplied = true;
+
+    const origFill = ctx.fillText.bind(ctx);
+    const origStroke = ctx.strokeText.bind(ctx);
+
+    ctx.fillText = function (text, x, y, maxWidth) {
+      this.save();
+      this.scale(factor, factor);
+      origFill(text, x / factor, y / factor, maxWidth ? maxWidth / factor : undefined);
+      this.restore();
+    };
+    ctx.strokeText = function (text, x, y, maxWidth) {
+      this.save();
+      this.scale(factor, factor);
+      origStroke(text, x / factor, y / factor, maxWidth ? maxWidth / factor : undefined);
+      this.restore();
+    };
+  }
+};
+
+Chart.register(TextZoomPlugin);
+
 export function completeness_pie(d, pieDiv) {
     const pieCanvas = document.createElement('canvas');
     pieCanvas.width = 500;               
@@ -117,10 +146,39 @@ export function completeness_pie(d, pieDiv) {
 		options: {
 			borderWidth: 1,
 			responsive: false,
+			layout: {
+				// padding: {
+				// 	top: 20,
+				// 	right: 40,
+				// 	bottom: 20,
+				// 	left: 40
+				// }
+			},
 			plugins: {
+				//textZoom: { factor: 1.8 },
 				legend: {
 					labels: { 
-                        font: { size: 26, weight: 'bold' }  // Von 22 auf 26
+                        font: { size: 26, weight: 'bold' },
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            if (data.labels.length && data.datasets.length) {
+                                const dataset = data.datasets[0];
+                                const total = dataset.data.reduce((acc, val) => acc + val, 0);
+                                
+                                return data.labels.map((label, i) => {
+                                    const value = dataset.data[i];
+                                    const percentage = ((value * 100) / total).toFixed(2);
+                                    
+                                    return {
+                                        text: `${label}: ${percentage}%`,
+                                        fillStyle: dataset.backgroundColor[i],
+                                        hidden: false,
+                                        index: i
+                                    };
+                                });
+                            }
+                            return [];
+                        }
                     }
 				},
 				datalabels: {
@@ -195,7 +253,7 @@ export function completeness_bar(d, barDiv) {
 	d.missingValues.forEach((/** @type {any} */ mv, /** @type {number} */ i) => {
 		//if there is more then 5 type of missing values, create random color for each new type
 		if (i > 4) {
-			const color = '#' + (((1 << 24) * Math.random()) | 0).toString(16);
+			const color = getRandomColor();  // Verwende die neue Funktion
 			bcs.push(color);
 			bgcs.push(color + '33');
 		}
@@ -359,9 +417,20 @@ export function completeness_bar(d, barDiv) {
                 skipNull: true,
                 borderWidth: 1,
                 indexAxis: 'y',
+                layout: {
+                    padding: {
+                        top: 20,
+                        right: 50,
+                        bottom: 30,
+                        left: 50
+                    }
+                },
                 plugins: {
+                    //textZoom: { factor: 1.8 }, // Schrift intern größer zeichnen
                     legend: {
-                        labels: { font: { size: 26, weight: 'bold' } }  // Von 22 auf 26
+                        labels: {
+                            font: { size: 30, weight: 'bold' },
+                        }
                     },
                     datalabels: {
                         formatter: (value) => {
@@ -460,9 +529,9 @@ scatterCanvas.style.height = hS + 'px';
 	//	return;
 	//}
 	//create random color for border color and background color for the dataset
-	const color = '#' + (((1 << 24) * Math.random()) | 0).toString(16);
+	const color = getRandomColor();  // Verwende die neue Funktion statt der alten Berechnung
 
-	//this is list of the values in the variable as points of x-y-coordinate system
+    //this is list of the values in the variable as points of x-y-coordinate system
 	/**
 	 * @type {{ x: any; y: any; r: number; }[]}
 	 */
@@ -486,7 +555,7 @@ scatterCanvas.style.height = hS + 'px';
 		return obj.count !== max;
 	});
 	const max_new = Math.max(...without_max.map((/** @type {{ count: any; }} */ o) => o.count));
-	// console.log(max, min, max_new, max / max_new);
+	// console.log(max, min, max_new);
 	let text = '';
 	let add = '';
 	if (max / max_new < 10) {
@@ -552,16 +621,30 @@ scatterCanvas.style.height = hS + 'px';
 			data: scatterData,
 			options: {
 				responsive: false,
+				layout: {
+					padding: {
+						top: 30,
+						right: 30,
+						bottom: 30,
+						left: 30
+					}
+				},
 				plugins: {
+					textZoom: { factor: 1.8 },
 					datalabels: {
 						display: false
 					},
 					legend: { 
-					labels: { font: { size: 26, weight: 'bold' } }  // Von 22 auf 26
+					 display: true,  // Legende anzeigen
+                        labels: { 
+                            font: { size: 50, weight: 'bold' },
+                            boxWidth: 0,   // Keine Box-Breite
+                            boxHeight: 0   // Keine Box-Höhe
+                        }
 					},
 					tooltip: { 
-						titleFont: { size: 26, weight: 'bold' },  // Von 22 auf 26
-						bodyFont: { size: 24, weight: 'bold' }    // Von 22 auf 24
+						titleFont: { size: 40, weight: 'bold' },  // Von 22 auf 26
+						bodyFont: { size: 40, weight: 'bold' }    // Von 22 auf 24
 					}
 				},
 				scales: {
@@ -757,9 +840,18 @@ export function boxplot(v, boxplotDiv) {
             data: boxplotData,
             options: {
                 responsive: false,
+                layout: {
+                    padding: {
+                        top: 20,
+                        right: 30,
+                        bottom: 20,
+                        left: 20
+                    }
+                },
                 plugins: {
+                    textZoom: { factor: 1.8 },
                     legend: {
-                        labels: { font: { size: 26, weight: 'bold' } }  // Von 22 auf 26
+                        labels: { font: { size: 26, weight: 'bold' } }
                     },
                     datalabels: {
                         display: false
@@ -804,8 +896,8 @@ export function bar_cat(v, barDiv) {
     const barCanvas = document.createElement('canvas');
     // Height based on top 20 categories at most
     const categories = Math.min(20, (v.uniqueValues?.length || 0));
-    const w = 1000;
-    const h = Math.max(300, 24 * categories + 120);
+    const w = 1400;
+    const h = Math.max(600, 40 * categories + 200);
     barCanvas.width = w;
     barCanvas.height = h;
     barCanvas.style.width = w + 'px';
@@ -863,7 +955,7 @@ export function bar_cat(v, barDiv) {
 	barData.labels = label;
 	// @ts-ignore
 	barData.datasets.push({
-		label: v.variableName + ' (max 20 with most counts)',
+		label: v.variableName + ' (top 20 values)',
 		data: data,
 		borderColor: 'rgb(54, 162, 235)', //border color of the dataset
 		backgroundColor: 'rgba(190, 225, 218, 1)', //background color of the dataset
@@ -884,21 +976,47 @@ export function bar_cat(v, barDiv) {
 			data: barData,
 			options: {
 				responsive: false,
+				layout: {
+					padding: {
+						top: 30,
+						right: 30,
+						bottom: 30,
+						left: 30
+					}
+				},
+                plugins: {
+                    textZoom: { factor: 1.8 }, // Schrift intern größer zeichnen
+                    legend: {
+                        display: true,
+                        labels: {
+                            font: { size: 30, weight: 'bold' },
+                            boxWidth: 0,  
+                            boxHeight: 0   
+                        }
+                    },
+                    datalabels: {
+                        display: false
+                    },
+                    tooltip: {
+                        titleFont: { size: 26, weight: 'bold' },
+                        bodyFont: { size: 24, weight: 'bold' }
+                    }
+                },
 				scales: {
                     x: { title: {
                         display: true,
                         text: 'Categories',
-                        font: { size: 26, weight: 'bold' }  // Von 20 auf 26
+                        font: { size: 40, weight: 'bold' }  // Von 20 auf 26
                     },
-                    ticks: { font: { size: 22, weight: 'bold' } } },
+                    ticks: { font: { size: 40, weight: 'bold' } } },
                     y: { 
                         title: {
                             display: true,
                             text: 'Count',
-                            font: { size: 26, weight: 'bold' }  // Von 20 auf 26
+                            font: { size: 40, weight: 'bold' }  // Von 20 auf 26
                         },
                         beginAtZero: true, 
-                        ticks: { font: { size: 22, weight: 'bold' } } }
+                        ticks: { font: { size: 40, weight: 'bold' } } }
                 }
 			}
 		});
@@ -918,4 +1036,19 @@ function compare(a, b) {
 		return 1;
 	}
 	return 0;
+}
+
+
+/**
+ * @returns {string} Hex-Farbcode
+ */
+function getRandomColor() {
+    const colorPalette = [
+        '#b5e0d9', 
+        '#ffd599', 
+        '#e5f3f0'
+    ];
+    
+    const randomIndex = Math.floor(Math.random() * colorPalette.length);
+    return colorPalette[randomIndex];
 }

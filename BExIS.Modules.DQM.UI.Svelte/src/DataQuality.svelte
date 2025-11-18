@@ -52,9 +52,9 @@
 
 		ds_struct_date = value;
 	});
-	let testDatasetId = '26487';
-	console.log("datasetId123d:", testDatasetId);
-	$: id = testDatasetId;
+	// let testDatasetId = '26487';
+	// console.log("datasetId123d:", testDatasetId);
+	$: id = datasetid;
 
 
 onMount(async function() {
@@ -374,6 +374,7 @@ function isIdColumn(variable) {
 			}
 
 			if (v.dataTypeSystemType == 'DateTime') {
+				console.log("DateTime variable found:", v);
 				bar_cat(v, barCatBox);
 				count_date++;
 			}
@@ -422,10 +423,11 @@ function isIdColumn(variable) {
             show_boxplots();
         } else if (tabsBasic === 2) {
             category_bar_plot();
-        } else if (tabsBasic === 3) {
-            // Date-Tab: Kein Chart, nur Text
-            console.log("Date-Tab aktiv, keine Visualisierung.");
-        }
+        } 
+		//else if (tabsBasic === 3) {
+        //     // Date-Tab: Kein Chart, nur Text
+        //     console.log("Date-Tab aktiv, keine Visualisierung.");
+        // }
     }
 
     // Charts für Missing Value Check (tabsMissingValues)
@@ -539,17 +541,17 @@ function isIdColumn(variable) {
 		<Tab bind:group={tabsBasic} name="Bar Plot (text)" value={2}
 			>Bar Plot (text)<sup class="badge variant-filled-primary">{count_text}</sup></Tab
 		>
-		<Tab bind:group={tabsBasic} name="Date" value={3}
+		<!-- <Tab bind:group={tabsBasic} name="Date" value={3}
 			>Date<sup class="badge variant-filled-primary">{count_date}</sup></Tab
-		>
+		> -->
 		<!-- Panel -->
 		<svelte:fragment slot="panel">
 			<div hidden={tabsBasic !== 0} id="scatter" bind:this={scatterDiv}></div>
 			<!-- <div hidden={tabsBasic !== 1} id="boxplot" bind:this={boxplotDiv} ></div> -->
 			<div hidden={tabsBasic !== 2} id="bar_cat" bind:this={barCatDiv} > </div>
-			<div hidden={tabsBasic !== 3}>
+			<!-- <div hidden={tabsBasic !== 3}>
 				<p class="pt-2">Sorry, no visualization available.</p>
-			</div>
+			</div> -->
 		</svelte:fragment>
 	</TabGroup>
 	</div>
