@@ -100,12 +100,83 @@ const TextZoomPlugin = {
 
 Chart.register(TextZoomPlugin);
 
+// HTML-Legende: Box oben, Text darunter
+const htmlLegendPlugin = {
+  id: 'htmlLegend',
+  afterUpdate(chart, _args, options) {
+    const container = options.container;
+    if (!container) return;
+
+    // Container leeren
+    container.innerHTML = '';
+
+    // Legendendaten wie bisher über generateLabels holen
+    const items = chart.options.plugins.legend.labels.generateLabels(chart);
+
+    items.forEach((item) => {
+      const entry = document.createElement('div');
+      entry.style.display = 'flex';
+      entry.style.flexDirection = 'column';
+      entry.style.alignItems = 'center';
+      entry.style.marginRight = '16px';
+      entry.style.fontSize = '18px';
+      entry.style.fontWeight = 'bold';
+      entry.style.cursor = 'pointer';
+
+      // Farbbox
+      const box = document.createElement('div');
+      box.style.width = '40px';
+      box.style.height = '24px';
+      box.style.border = '1px solid #333';
+      box.style.background = item.fillStyle;
+
+      // Text UNTER der Box
+      const label = document.createElement('div');
+      if (Array.isArray(item.text)) {
+        // falls du wie aktuell [label, "77%"] zurückgibst
+        label.innerHTML = item.text.join('<br>');
+      } else {
+        label.textContent = item.text;
+      }
+        label.style.fontSize = '14px';       
+        label.style.fontWeight = 'normal';   
+        label.style.lineHeight = '1.1';
+        label.style.textAlign = 'center';
+
+      entry.appendChild(box);
+      entry.appendChild(label);
+
+      // Klick zum Ein-/Ausblenden des Segments
+      entry.onclick = () => {
+        chart.toggleDataVisibility(item.index);
+        chart.update();
+      };
+
+      container.appendChild(entry);
+    });
+  }
+};
+
+Chart.register(htmlLegendPlugin);
+
+
 export function completeness_pie(d, pieDiv) {
     const pieCanvas = document.createElement('canvas');
     pieCanvas.width = 500;               
     pieCanvas.height = 250;
     pieCanvas.style.width = '500px';     
     pieCanvas.style.height = '250px';
+
+     const legendDiv = document.createElement('div');
+legendDiv.style.display = 'flex';
+legendDiv.style.justifyContent = 'center';   // 🔹 mittig
+legendDiv.style.gap = '24px';
+legendDiv.style.margin = '10px auto';        // 🔹 zentriert + Abstand
+legendDiv.style.alignItems = 'flex-start';
+
+    // zuerst die Legende, dann das Canvas ins übergebene pieDiv packen
+    pieDiv?.appendChild(legendDiv);
+    pieDiv?.appendChild(pieCanvas);
     /**
 	 * @type {string[]}
 	 */
@@ -121,7 +192,7 @@ export function completeness_pie(d, pieDiv) {
 		labels.push('Missing Values');
 		data.push(d.countMv);
 		backgroundColor.push('rgb(255,229,191, 1)');
-		hoverBackgroundColor.push('rgba(255,229,191,1)');
+		hoverBackgroundColor.push('srgba(255,229,191,1)');
 	}
 	if (d.countNull > 0) {
 		labels.push('NULL');
@@ -157,57 +228,52 @@ export function completeness_pie(d, pieDiv) {
 			plugins: {
 				//textZoom: { factor: 1.8 },
 				legend: {
-					labels: { 
-                        font: { size: 26, weight: 'bold' },
-                        generateLabels: function(chart) {
-                            const data = chart.data;
-                            if (data.labels.length && data.datasets.length) {
-                                const dataset = data.datasets[0];
-                                const total = dataset.data.reduce((acc, val) => acc + val, 0);
-                                
-                                return data.labels.map((label, i) => {
-                                    const value = dataset.data[i];
-                                    const percentage = ((value * 100) / total).toFixed(2);
-                                    
-                                    return {
-                                        text: `${label}: ${percentage}%`,
-                                        fillStyle: dataset.backgroundColor[i],
-                                        hidden: false,
-                                        index: i
-                                    };
-                                });
-                            }
-                            return [];
-                        }
-                    }
-				},
+                    display: false,    
+    labels: {
+        font: { size: 26, weight: 'bold' },
+        generateLabels: function (chart) {
+                const data = chart.data;
+                if (data.labels.length && data.datasets.length) {
+                    const dataset = data.datasets[0];
+                    const total = dataset.data.reduce((acc, val) => acc + val, 0);
+
+                    return data.labels.map((label, i) => {
+                        const value = dataset.data[i];
+                        const percentage = ((value * 100) / total).toFixed(2);
+
+                        return {
+                            // hier kannst du frei definieren, was unter der Box stehen soll
+                            text: [label, percentage + '%'],
+                            fillStyle: dataset.backgroundColor[i],
+                            hidden: false,
+                            index: i
+                        };
+                    });
+                }
+                return [];
+            }
+        }
+    },
+     htmlLegend: {
+        container: legendDiv
+    },
+
 				datalabels: {
 					formatter: (value) => {
 						return ((value * 100) / d.count).toFixed(2) + '%';
 					},
 					color: '#fff',
 					font: {
-						size: 24,  // Von 20 auf 24
+						size: 24,  
 						weight: 'bold'
 					},
 					display: [d.countData > 0, d.countMv > 0, d.countNull > 0],
 					align: 'start',
 					offset: [-16, -32, -48]
 				},
-				tooltip: {
-					backgroundColor: '#ff',
-					titleFont: { size: 26, weight: 'bold' },  // Von 22 auf 26
-					bodyFont: { size: 24, weight: 'bold' },   // Von 22 auf 24
-					enabled: true,
-					callbacks: {
-						label: function (context) {
-							const x = context.parsed;
-							if (x !== null) {
-								return `${context.label}: ${x} (${((x * 100) / d.count).toFixed(2)}%)`;
-							}
-						}
-					}
-				}
+                tooltip: {
+                    enabled: false
+                }
 			}
 		}
 	});
@@ -479,13 +545,15 @@ export function completeness_bar(d, barDiv) {
                         },
                         stacked: true,
                         ticks: {
-                            font: { size: 22, weight: 'bold' },  // Von 18 auf 22
+                            font: { size: 22, weight: 'bold' },
+                            padding: 30,
                             callback: function (index) {
                                 let label = this.getLabelForValue(index);
                                 if (label.length > 20) label = label.substring(0, 20) + '...';
                                 return label;
                             }
-                        }
+                        },
+                        padding: { left: 90 }  
                     }
                 },
                 interaction: { mode: 'index', axis: 'y', intersect: false }
@@ -1044,9 +1112,9 @@ function compare(a, b) {
  */
 function getRandomColor() {
     const colorPalette = [
-        '#b5e0d9', 
-        '#ffd599', 
-        '#e5f3f0'
+        '#7dc9bd', 
+        '#ffb64d', 
+        '#81cb7b'
     ];
     
     const randomIndex = Math.floor(Math.random() * colorPalette.length);
