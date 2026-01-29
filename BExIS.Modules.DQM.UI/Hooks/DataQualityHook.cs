@@ -27,7 +27,7 @@ namespace BExIS.Modules.Dqm.UI.Hooks
             bool hasAccess = hasUserAccessRights(username);
 
             // user rights to the dataset
-            bool hasRights = hasUserEntityRights(id, username, RightType.Write);
+            bool hasRights = hasUserEntityRights(id, username, RightType.Read);
 
             // if one fail then access is denied
             if (hasAccess == false || hasRights == false) Status = HookStatus.AccessDenied;
