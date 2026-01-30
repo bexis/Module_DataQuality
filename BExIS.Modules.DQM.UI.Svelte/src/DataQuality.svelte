@@ -538,8 +538,8 @@ function isIdColumn(variable) {
 		<!-- <Tab bind:group={tabsBasic} name="Box-Whisker-Plot (number)" value={1}
 			>Box-Whisker-Plot (#)<sup class="badge variant-filled-primary">{count_number}</sup></Tab
 		> -->
-		<Tab bind:group={tabsBasic} name="Bar Plot (text)" value={2}
-			>Bar Plot (text)<sup class="badge variant-filled-primary">{count_text}</sup></Tab
+		<Tab bind:group={tabsBasic} name="Bar Chart" value={2}
+			>Bar Chart<sup class="badge variant-filled-primary">{count_text}</sup></Tab
 		>
 		<!-- <Tab bind:group={tabsBasic} name="Date" value={3}
 			>Date<sup class="badge variant-filled-primary">{count_date}</sup></Tab
