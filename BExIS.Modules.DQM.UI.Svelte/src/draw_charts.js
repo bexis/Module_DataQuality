@@ -189,13 +189,13 @@ legendDiv.style.alignItems = 'flex-start';
 	let hoverBackgroundColor = ['rgba(218, 240, 236, 1)'];
 
 	if (d.countMv > 0) {
-		labels.push('Missing Values');
+		labels.push('Missing Value (NA)');
 		data.push(d.countMv);
 		backgroundColor.push('rgb(255,229,191, 1)');
-		hoverBackgroundColor.push('srgba(255,229,191,1)');
+		hoverBackgroundColor.push('rgba(255,229,191,1)'); // Korrigiert von 'srgba' zu 'rgba'
 	}
 	if (d.countNull > 0) {
-		labels.push('NULL');
+		labels.push('empty cells');
 		data.push(d.countNull);
 		backgroundColor.push('rgba(255,191,191, 1)');
 		hoverBackgroundColor.push('rgba(255,191,191,1)');
@@ -273,12 +273,12 @@ legendDiv.style.alignItems = 'flex-start';
 				},
                 tooltip: {
                     enabled: false
-                }
-			}
-		}
-	});
-	// @ts-ignore
-	pieDiv?.appendChild(pieCanvas);
+                },
+            }
+		}}); 
+
+    // @ts-ignore
+    pieDiv?.appendChild(pieCanvas);
 }
 
 /**
@@ -335,7 +335,7 @@ export function completeness_bar(d, barDiv) {
 
 	//create dataset for empty cells (null) and put it in the list bar.Data.datasets
 	const nullsDataset = {
-		label: 'NULL',
+		label: 'empty cells',
 		data: [],
 		backgroundColor: 'rgba(255,191,191, 1)',
 		borderColor: 'rgba(0, 0, 0, 0.45)'
@@ -514,16 +514,17 @@ export function completeness_bar(d, barDiv) {
                         titleColor: '#000',
                         bodyColor: '#000',
                         enabled: true,
-                        titleFont: { size: 26, weight: 'bold' },  // Von 22 auf 26
-                        bodyFont: { size: 24, weight: 'bold' },   // Von 22 auf 24
+                        titleFont: { size: 10, weight: 'normal' }, // Kleinere Titel-Schriftgröße
+                        bodyFont: { size: 8, weight: 'normal' }, // Kleinere Schriftgröße für Tooltip-Text
                         callbacks: {
-                            label: function (context) {
-                                const x = context.parsed.x;
-                                if (x !== null) {
-                                    return `${context.dataset.label}: ${x} (${((x * 100) / d.countRows).toFixed(2)}%)`;
-                                }
+                            label: function(context) {
+                                return `${context.label}: ${context.raw}`;
                             }
-                        }
+                        },
+                        padding: 12, // Zusätzlicher Abstand für noch größere Boxen
+                        displayColors: false, // Entfernt Farbboxen
+                        boxHeight: 18, // Noch größere Höhe der Tooltip-Box
+                        boxWidth: 18 // Noch größere Breite der Tooltip-Box
                     }
                 },
                 scales: {
@@ -962,15 +963,17 @@ export function boxplot(v, boxplotDiv) {
  */
 export function bar_cat(v, barDiv) {
     const barCanvas = document.createElement('canvas');
-    // Height based on top 20 categories at most
     const categories = Math.min(20, (v.uniqueValues?.length || 0));
     const w = 1400;
-    const h = Math.max(600, 40 * categories + 200);
+    const h = 500; // Match the height of the scatter chart
     barCanvas.width = w;
     barCanvas.height = h;
     barCanvas.style.width = w + 'px';
     barCanvas.style.height = h + 'px';
 
+	// Dynamically calculate bar thickness based on available space
+    const maxBarWidth = Math.floor(w / (categories * 2)); // Ensure bars fit within the canvas
+    const barThickness = Math.min(maxBarWidth, 50); // Cap the bar thickness at 50px
 
 	//if the type of the vriable is string, there is no need for the visualizaion
 	const types = ['String'];
@@ -1023,13 +1026,13 @@ export function bar_cat(v, barDiv) {
 	barData.labels = label;
 	// @ts-ignore
 	barData.datasets.push({
-		label: v.variableName + ' (top 20 values)',
+		label: v.variableName,
 		data: data,
 		borderColor: 'rgb(54, 162, 235)', //border color of the dataset
 		backgroundColor: 'rgba(190, 225, 218, 1)', //background color of the dataset
 		barPercentage: 0.5,
-		barThickness: 6,
-		maxBarThickness: 8,
+		barThickness: barThickness, // Dynamically calculated bar thickness
+        maxBarThickness: barThickness, // Ensure max thickness matches calculated value
 		minBarLength: 2
 	});
 
@@ -1066,8 +1069,10 @@ export function bar_cat(v, barDiv) {
                         display: false
                     },
                     tooltip: {
-                        titleFont: { size: 26, weight: 'bold' },
-                        bodyFont: { size: 24, weight: 'bold' }
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 14, weight: 'bold' },
+                         boxHeight: 18,
+                        boxWidth: 25
                     }
                 },
 				scales: {
