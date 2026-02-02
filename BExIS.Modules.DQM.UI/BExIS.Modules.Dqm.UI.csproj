@@ -153,6 +153,7 @@
     <Content Include="Dqm.Settings.json" />
     <Content Include="Views\DataQuality\Index.cshtml" />
     <None Include="Properties\PublishProfiles\BexisServer_2030-testsite.pubxml" />
+    <None Include="Properties\PublishProfiles\BexisServer_v4-ProdTestsite.pubxml" />
     <None Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>
     </None>
